@@ -12,6 +12,10 @@ import {
 import { addModule, reorderModules } from '../controllers/module.controller.js';
 import { enroll } from '../controllers/enrollment.controller.js';
 import { getCourseProgress } from '../controllers/progress.controller.js';
+import {
+  createAssignment,
+  listCourseAssignments,
+} from '../controllers/assignment.controller.js';
 import { protect, authorize, optionalAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
@@ -35,6 +39,10 @@ router.post('/', ...instructor, createCourseValidator, validate, createCourse);
 router.post('/:id/enroll', protect, enroll);
 router.get('/:id/learn', protect, getCourseLearn);
 router.get('/:id/progress', protect, getCourseProgress);
+
+/* ------------------------------- Assignments -------------------------------- */
+router.get('/:id/assignments', protect, listCourseAssignments);
+router.post('/:id/assignments', ...instructor, createAssignment);
 
 /* --------------------------- Public-or-owner detail ------------------------- */
 router.get('/:id', optionalAuth, getCourse);

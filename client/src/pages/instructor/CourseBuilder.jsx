@@ -8,6 +8,7 @@ import {
   EyeOff,
   Globe,
   Layers,
+  ClipboardList,
 } from 'lucide-react';
 import {
   useCourse,
@@ -128,6 +129,9 @@ export default function CourseBuilder() {
           </div>
 
           <div className="flex shrink-0 gap-2">
+            <Link to={`/courses/${id}/assignments`} className="btn-ghost">
+              <ClipboardList className="h-4 w-4" /> Assignments
+            </Link>
             <button onClick={() => setEditingDetails(true)} className="btn-ghost">
               <Pencil className="h-4 w-4" /> Details
             </button>

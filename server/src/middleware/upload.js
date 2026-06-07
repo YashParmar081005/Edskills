@@ -23,6 +23,12 @@ export const uploadImage = multer({
   fileFilter: fileFilter('image/', 'image'),
 }).single('image');
 
+// Any file type (assignment submissions: pdf, docx, zip, images, …).
+export const uploadAny = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB
+}).single('file');
+
 /**
  * Wrap a multer middleware so its errors (size/type) become clean ApiErrors
  * handled by the central error handler instead of crashing.

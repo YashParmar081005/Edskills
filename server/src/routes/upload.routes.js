@@ -2,15 +2,30 @@ import { Router } from 'express';
 import {
   uploadVideoFile,
   uploadThumbnailFile,
+  uploadGenericFile,
 } from '../controllers/upload.controller.js';
 import { protect, authorize } from '../middleware/auth.js';
-import { uploadVideo, uploadImage, runUpload } from '../middleware/upload.js';
+import { uploadVideo, uploadImage, uploadAny, runUpload } from '../middleware/upload.js';
 
 const router = Router();
 
-router.use(protect, authorize('instructor', 'admin'));
+// Instructor/admin media
+router.post(
+  '/video',
+  protect,
+  authorize('instructor', 'admin'),
+  runUpload(uploadVideo),
+  uploadVideoFile
+);
+router.post(
+  '/thumbnail',
+  protect,
+  authorize('instructor', 'admin'),
+  runUpload(uploadImage),
+  uploadThumbnailFile
+);
 
-router.post('/video', runUpload(uploadVideo), uploadVideoFile);
-router.post('/thumbnail', runUpload(uploadImage), uploadThumbnailFile);
+// Generic file (assignment submissions) — any authenticated user
+router.post('/file', protect, runUpload(uploadAny), uploadGenericFile);
 
 export default router;

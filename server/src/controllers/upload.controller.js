@@ -46,3 +46,24 @@ export const uploadThumbnailFile = asyncHandler(async (req, res) => {
 
   res.status(201).json({ success: true, url: result.url, publicId: result.publicId });
 });
+
+/**
+ * POST /api/upload/file   (multipart field: "file") — any type
+ * Used for assignment submissions. Accessible to any authenticated user.
+ */
+export const uploadGenericFile = asyncHandler(async (req, res) => {
+  assertConfigured();
+  if (!req.file) throw new ApiError(400, 'No file provided.');
+
+  const result = await uploadBuffer(req.file.buffer, {
+    folder: 'ai-lms/submissions',
+    resourceType: 'auto',
+  });
+
+  res.status(201).json({
+    success: true,
+    url: result.url,
+    fileName: req.file.originalname,
+    publicId: result.publicId,
+  });
+});

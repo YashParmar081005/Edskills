@@ -12,6 +12,8 @@ import BrowseCourses from './pages/BrowseCourses.jsx';
 import CourseDetail from './pages/CourseDetail.jsx';
 import MyCourses from './pages/MyCourses.jsx';
 import CoursePlayer from './pages/CoursePlayer.jsx';
+import AssignmentsPage from './pages/AssignmentsPage.jsx';
+import SubmissionsGrading from './pages/SubmissionsGrading.jsx';
 
 import GuestRoute from './routes/GuestRoute.jsx';
 import RoleRoute from './routes/RoleRoute.jsx';
@@ -42,6 +44,7 @@ export default function App() {
           <Route path="/learn/:courseId" element={<CoursePlayer />} />
           <Route path="/learn/:courseId/:lessonId" element={<CoursePlayer />} />
           <Route path="/student/my-courses" element={<MyCourses />} />
+          <Route path="/courses/:courseId/assignments" element={<AssignmentsPage />} />
         </Route>
 
         <Route element={<RoleRoute roles={['admin']} />}>
@@ -51,6 +54,10 @@ export default function App() {
           <Route path="/instructor" element={<InstructorDashboard />} />
           <Route path="/instructor/courses" element={<CourseList />} />
           <Route path="/instructor/courses/:id" element={<CourseBuilder />} />
+          <Route
+            path="/instructor/assignments/:assignmentId/submissions"
+            element={<SubmissionsGrading />}
+          />
         </Route>
         <Route element={<RoleRoute roles={['student']} />}>
           <Route path="/student" element={<StudentDashboard />} />

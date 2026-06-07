@@ -101,3 +101,39 @@ Rules:
     feedback: data.feedback ? String(data.feedback).trim() : '',
   };
 }
+
+/**
+ * Grade a student's assignment submission against the instructions/rubric.
+ * @returns {Promise<{score:number, feedback:string}>}
+ */
+export async function gradeAssignment({ title, description, maxScore = 100, submission }) {
+  const user = `Grade this student's assignment submission.
+
+Respond with JSON: {"score": <number between 0 and ${maxScore}>, "feedback": "<detailed, constructive feedback>"}
+
+ASSIGNMENT TITLE: ${title}
+INSTRUCTIONS / RUBRIC:
+${description || '(none provided)'}
+MAX SCORE: ${maxScore}
+
+STUDENT SUBMISSION:
+"""
+${String(submission || '').slice(0, 8000)}
+"""
+
+Rules:
+- "score" is between 0 and ${maxScore} (fractional allowed).
+- Feedback should note specific strengths and concrete areas to improve.`;
+
+  const data = await chatJSON({
+    system: GRADE_SYSTEM,
+    user,
+    validate: (o) => o && typeof o.score === 'number' && o.score >= 0,
+    temperature: 0.2,
+  });
+
+  return {
+    score: Math.max(0, Math.min(maxScore, data.score)),
+    feedback: data.feedback ? String(data.feedback).trim() : '',
+  };
+}

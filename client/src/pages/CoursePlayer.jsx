@@ -12,6 +12,7 @@ import {
   FileText,
   PlayCircle,
   ListChecks,
+  ClipboardList,
 } from 'lucide-react';
 import { useCourseLearn, learnKeys } from '../features/learn/hooks.js';
 import { saveProgress } from '../api/learn.js';
@@ -167,9 +168,17 @@ export default function CoursePlayer() {
           <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
             {data.course.title}
           </h1>
-          <span className="text-sm font-semibold text-brand-600 dark:text-brand-300">
-            {percent}% complete
-          </span>
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/courses/${courseId}/assignments`}
+              className="btn-ghost !py-1.5 text-xs"
+            >
+              <ClipboardList className="h-3.5 w-3.5" /> Assignments
+            </Link>
+            <span className="text-sm font-semibold text-brand-600 dark:text-brand-300">
+              {percent}% complete
+            </span>
+          </div>
         </div>
         <ProgressBar percent={percent} className="mt-2" />
       </div>
