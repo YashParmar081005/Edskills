@@ -14,6 +14,8 @@ import MyCourses from './pages/MyCourses.jsx';
 import CoursePlayer from './pages/CoursePlayer.jsx';
 import AssignmentsPage from './pages/AssignmentsPage.jsx';
 import SubmissionsGrading from './pages/SubmissionsGrading.jsx';
+import CourseForum from './pages/CourseForum.jsx';
+import ThreadDetail from './pages/ThreadDetail.jsx';
 
 import GuestRoute from './routes/GuestRoute.jsx';
 import RoleRoute from './routes/RoleRoute.jsx';
@@ -45,6 +47,8 @@ export default function App() {
           <Route path="/learn/:courseId/:lessonId" element={<CoursePlayer />} />
           <Route path="/student/my-courses" element={<MyCourses />} />
           <Route path="/courses/:courseId/assignments" element={<AssignmentsPage />} />
+          <Route path="/courses/:courseId/forum" element={<CourseForum />} />
+          <Route path="/threads/:threadId" element={<ThreadDetail />} />
         </Route>
 
         <Route element={<RoleRoute roles={['admin']} />}>

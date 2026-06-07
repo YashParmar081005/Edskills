@@ -9,6 +9,7 @@ import {
   Globe,
   Layers,
   ClipboardList,
+  MessagesSquare,
 } from 'lucide-react';
 import {
   useCourse,
@@ -129,6 +130,9 @@ export default function CourseBuilder() {
           </div>
 
           <div className="flex shrink-0 gap-2">
+            <Link to={`/courses/${id}/forum`} className="btn-ghost">
+              <MessagesSquare className="h-4 w-4" /> Discussion
+            </Link>
             <Link to={`/courses/${id}/assignments`} className="btn-ghost">
               <ClipboardList className="h-4 w-4" /> Assignments
             </Link>

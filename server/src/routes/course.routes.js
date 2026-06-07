@@ -16,6 +16,7 @@ import {
   createAssignment,
   listCourseAssignments,
 } from '../controllers/assignment.controller.js';
+import { listThreads, createThread } from '../controllers/forum.controller.js';
 import { protect, authorize, optionalAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
@@ -43,6 +44,10 @@ router.get('/:id/progress', protect, getCourseProgress);
 /* ------------------------------- Assignments -------------------------------- */
 router.get('/:id/assignments', protect, listCourseAssignments);
 router.post('/:id/assignments', ...instructor, createAssignment);
+
+/* ---------------------------------- Forum ----------------------------------- */
+router.get('/:id/threads', protect, listThreads);
+router.post('/:id/threads', protect, createThread);
 
 /* --------------------------- Public-or-owner detail ------------------------- */
 router.get('/:id', optionalAuth, getCourse);

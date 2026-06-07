@@ -1,6 +1,7 @@
 import { createApp } from './app.js';
 import { env, checkEnv } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
+import { initSocket } from './sockets/index.js';
 
 async function start() {
   checkEnv();
@@ -19,6 +20,9 @@ async function start() {
     console.log(`   ➜  CORS:    ${env.clientUrl}`);
     console.log('');
   });
+
+  // Real-time layer (Phase 7): forum live updates + notifications.
+  initSocket(server);
 
   // Graceful shutdown
   const shutdown = async (signal) => {

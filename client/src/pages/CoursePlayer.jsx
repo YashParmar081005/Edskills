@@ -13,6 +13,7 @@ import {
   PlayCircle,
   ListChecks,
   ClipboardList,
+  MessagesSquare,
 } from 'lucide-react';
 import { useCourseLearn, learnKeys } from '../features/learn/hooks.js';
 import { saveProgress } from '../api/learn.js';
@@ -169,6 +170,12 @@ export default function CoursePlayer() {
             {data.course.title}
           </h1>
           <div className="flex items-center gap-3">
+            <Link
+              to={`/courses/${courseId}/forum`}
+              className="btn-ghost !py-1.5 text-xs"
+            >
+              <MessagesSquare className="h-3.5 w-3.5" /> Discussion
+            </Link>
             <Link
               to={`/courses/${courseId}/assignments`}
               className="btn-ghost !py-1.5 text-xs"

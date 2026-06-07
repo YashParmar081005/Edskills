@@ -14,6 +14,12 @@ export default defineConfig({
         target: 'http://localhost:5500',
         changeOrigin: true,
       },
+      // Proxy the Socket.io websocket so the client stays same-origin in dev.
+      '/socket.io': {
+        target: 'http://localhost:5500',
+        ws: true,
+        changeOrigin: true,
+      },
     },
   },
 });

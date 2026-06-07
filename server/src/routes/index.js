@@ -11,10 +11,13 @@ import aiRoutes from './ai.routes.js';
 import quizRoutes from './quiz.routes.js';
 import assignmentRoutes from './assignment.routes.js';
 import submissionRoutes from './submission.routes.js';
+import threadRoutes from './thread.routes.js';
+import replyRoutes from './reply.routes.js';
+import notificationRoutes from './notification.routes.js';
 
 /**
  * Root API router. Mount every feature router here so app.js stays clean.
- * Future phases add: /threads, /payments, etc.
+ * Future phases add: /payments, /certificates, /analytics, etc.
  */
 const router = Router();
 
@@ -30,5 +33,8 @@ router.use('/ai', aiRoutes);
 router.use('/quizzes', quizRoutes);
 router.use('/assignments', assignmentRoutes);
 router.use('/submissions', submissionRoutes);
+router.use('/threads', threadRoutes);
+router.use('/replies', replyRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

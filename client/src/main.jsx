@@ -9,6 +9,7 @@ import App from './App.jsx';
 import { queryClient } from './lib/queryClient.js';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { SocketProvider } from './context/SocketContext.jsx';
 import AnimatedBackground from './components/AnimatedBackground.jsx';
 import './index.css';
 
@@ -18,9 +19,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
-            <AnimatedBackground />
-            <App />
-            <Toaster
+            <SocketProvider>
+              <AnimatedBackground />
+              <App />
+              <Toaster
               position="top-right"
               toastOptions={{
                 duration: 3500,
@@ -33,7 +35,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 success: { iconTheme: { primary: '#38bdf8', secondary: '#0f172a' } },
                 error: { iconTheme: { primary: '#f43f5e', secondary: '#0f172a' } },
               }}
-            />
+              />
+            </SocketProvider>
           </AuthProvider>
         </BrowserRouter>
         <ReactQueryDevtools initialIsOpen={false} />
