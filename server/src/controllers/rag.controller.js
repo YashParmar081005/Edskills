@@ -70,12 +70,15 @@ export const chatAssistant = asyncHandler(async (req, res) => {
   if (!isAIConfigured()) {
     throw new ApiError(503, 'AI is not configured. Add GROQ_API_KEY to the server .env.');
   }
-  const { messages = [], courseId } = req.body;
+  const { messages = [], courseId, docText } = req.body;
   if (!Array.isArray(messages) || messages.length === 0) {
     throw new ApiError(400, 'messages are required.');
   }
   const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
   if (!lastUser.trim()) throw new ApiError(400, 'A user message is required.');
+
+  // Optional text from a file the user attached in the chat.
+  const docContext = typeof docText === 'string' ? docText.slice(0, 16000) : '';
 
   // Course context (only if the user can access that course).
   let chunks = [];
@@ -103,6 +106,7 @@ export const chatAssistant = asyncHandler(async (req, res) => {
       role: req.user.role,
       messages,
       courseContext,
+      docContext,
     });
 
     const seen = new Set();

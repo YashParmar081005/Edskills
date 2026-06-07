@@ -9,8 +9,10 @@ import { User } from '../models/User.js';
 import { Payment } from '../models/Payment.js';
 import { Certificate } from '../models/Certificate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { INSTRUCTOR_RATE, PLATFORM_FEE_RATE } from '../config/revenue.js';
 
 const round = (n) => Math.round(n * 10) / 10;
+const money = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 /**
  * GET /api/analytics/instructor   (instructor/admin)
@@ -21,7 +23,7 @@ export const instructorAnalytics = asyncHandler(async (req, res) => {
   const courses = await Course.find(filter).select('title isPublished').lean();
   const ids = courses.map((c) => c._id);
 
-  const [enrollAgg, lessonAgg, completedAgg, quizAgg, subCount, studentAgg] = await Promise.all([
+  const [enrollAgg, lessonAgg, completedAgg, quizAgg, subCount, studentAgg, revenueAgg] = await Promise.all([
     Enrollment.aggregate([{ $match: { course: { $in: ids } } }, { $group: { _id: '$course', n: { $sum: 1 } } }]),
     Lesson.aggregate([{ $match: { course: { $in: ids } } }, { $group: { _id: '$course', n: { $sum: 1 } } }]),
     Progress.aggregate([
@@ -34,12 +36,17 @@ export const instructorAnalytics = asyncHandler(async (req, res) => {
     ]),
     Submission.countDocuments({ course: { $in: ids } }),
     Enrollment.distinct('student', { course: { $in: ids } }),
+    Payment.aggregate([
+      { $match: { course: { $in: ids }, status: 'paid' } },
+      { $group: { _id: '$course', gross: { $sum: '$amount' }, sales: { $sum: 1 } } },
+    ]),
   ]);
 
   const eMap = Object.fromEntries(enrollAgg.map((x) => [String(x._id), x.n]));
   const lMap = Object.fromEntries(lessonAgg.map((x) => [String(x._id), x.n]));
   const cMap = Object.fromEntries(completedAgg.map((x) => [String(x._id), x.n]));
   const qMap = Object.fromEntries(quizAgg.map((x) => [String(x._id), x]));
+  const rMap = Object.fromEntries(revenueAgg.map((x) => [String(x._id), x]));
 
   const perCourse = courses.map((c) => {
     const enrollments = eMap[String(c._id)] || 0;
@@ -48,6 +55,8 @@ export const instructorAnalytics = asyncHandler(async (req, res) => {
     const denom = enrollments * lessons;
     const completionRate = denom > 0 ? round((completed / denom) * 100) : 0;
     const avgQuizScore = qMap[String(c._id)] ? round(qMap[String(c._id)].avg) : 0;
+    const gross = rMap[String(c._id)]?.gross || 0;
+    const sales = rMap[String(c._id)]?.sales || 0;
     return {
       courseId: c._id,
       title: c.title,
@@ -56,21 +65,29 @@ export const instructorAnalytics = asyncHandler(async (req, res) => {
       lessons,
       completionRate,
       avgQuizScore,
+      sales,
+      grossRevenue: money(gross),
+      revenue: money(gross * INSTRUCTOR_RATE), // instructor's 90% net
     };
   });
 
   const totalEnrollments = perCourse.reduce((s, c) => s + c.enrollments, 0);
+  const grossRevenue = perCourse.reduce((s, c) => s + c.grossRevenue, 0);
   const withQuiz = perCourse.filter((c) => c.avgQuizScore > 0);
   const withEnroll = perCourse.filter((c) => c.enrollments > 0);
 
   res.json({
     success: true,
+    revenueShare: { instructor: INSTRUCTOR_RATE, platform: PLATFORM_FEE_RATE },
     totals: {
       courses: courses.length,
       published: courses.filter((c) => c.isPublished).length,
       enrollments: totalEnrollments,
       students: studentAgg.length,
       submissions: subCount,
+      grossRevenue: money(grossRevenue),
+      revenue: money(grossRevenue * INSTRUCTOR_RATE), // net to instructor (90%)
+      platformFee: money(grossRevenue * PLATFORM_FEE_RATE), // 10% kept by platform
       avgCompletion: withEnroll.length
         ? round(withEnroll.reduce((s, c) => s + c.completionRate, 0) / withEnroll.length)
         : 0,
@@ -115,7 +132,9 @@ export const adminAnalytics = asyncHandler(async (req, res) => {
       courses: courseCount,
       published: publishedCount,
       enrollments: enrollCount,
-      revenue: round(revenueAgg[0]?.total || 0),
+      revenue: money(revenueAgg[0]?.total || 0), // gross platform sales
+      platformEarnings: money((revenueAgg[0]?.total || 0) * PLATFORM_FEE_RATE), // 10% kept
+      instructorPayouts: money((revenueAgg[0]?.total || 0) * INSTRUCTOR_RATE), // 90% to instructors
       certificates: certCount,
       quizAttempts: quizAgg[0]?.n || 0,
       avgQuizScore: quizAgg[0] ? round(quizAgg[0].avg || 0) : 0,

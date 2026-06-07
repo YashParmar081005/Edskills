@@ -111,14 +111,19 @@ export default function LessonFormModal({ open, onClose, onSubmit, initial, savi
                 <>
                   <Loader2 className="h-5 w-5 animate-spin text-sky-500" />
                   <span className="text-sm text-slate-600 dark:text-slate-300">
-                    Uploading… {progress}%
+                    {progress < 100 ? `Uploading… ${progress}%` : 'Processing video… hang tight'}
                   </span>
                   <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/40 dark:bg-white/10">
                     <div
-                      className="h-full bg-gradient-to-r from-sky-400 to-brand-600 transition-all"
+                      className={`h-full bg-gradient-to-r from-sky-400 to-brand-600 transition-all ${progress >= 100 ? 'animate-pulse' : ''}`}
                       style={{ width: `${progress}%` }}
                     />
                   </div>
+                  {progress >= 100 && (
+                    <span className="text-xs text-slate-400">
+                      Sending to storage — large videos can take a minute.
+                    </span>
+                  )}
                 </>
               ) : (
                 <>
@@ -126,7 +131,7 @@ export default function LessonFormModal({ open, onClose, onSubmit, initial, savi
                   <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                     Upload a video file
                   </span>
-                  <span className="text-xs text-slate-400">MP4/WebM, up to 200 MB</span>
+                  <span className="text-xs text-slate-400">MP4/WebM · up to 100 MB on the free plan</span>
                 </>
               )}
               <input

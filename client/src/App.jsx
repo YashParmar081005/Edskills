@@ -30,6 +30,7 @@ import AdminRoles from './pages/AdminRoles.jsx';
 import MyCertificates from './pages/MyCertificates.jsx';
 import MyQuizzes from './pages/MyQuizzes.jsx';
 import DiscussHub from './pages/DiscussHub.jsx';
+import StudyTools from './pages/StudyTools.jsx';
 import Profile from './pages/Profile.jsx';
 import Settings from './pages/Settings.jsx';
 
@@ -74,6 +75,7 @@ export default function App() {
           <Route path="/student/certificates" element={<MyCertificates />} />
           <Route path="/student/quizzes" element={<MyQuizzes />} />
           <Route path="/student/discuss" element={<DiscussHub />} />
+          <Route path="/student/tools" element={<StudyTools />} />
         </Route>
 
         <Route element={<RoleRoute roles={['admin']} />}>

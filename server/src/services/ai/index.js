@@ -114,18 +114,22 @@ const ASSISTANT_SYSTEM = (role) =>
  * the model may ground course-specific answers in it and cite excerpt numbers.
  * @returns {Promise<{reply:string, sources:number[]}>}
  */
-export async function assistantChat({ role, messages, courseContext = '' }) {
+export async function assistantChat({ role, messages, courseContext = '', docContext = '' }) {
   const history = messages
     .slice(-6)
     .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
     .join('\n');
 
   const user =
+    (docContext
+      ? `ATTACHED DOCUMENT (the user uploaded this — use it to answer their questions):\n"""\n${String(docContext).slice(0, 16000)}\n"""\n\n`
+      : '') +
     (courseContext ? `RELEVANT COURSE MATERIAL:\n${courseContext}\n\n` : '') +
     `CONVERSATION:\n${history}\n\n` +
     (courseContext
       ? 'If the user asks about this course\'s content, answer using the material above and put the excerpt numbers you used in "sources". '
       : '') +
+    (docContext ? 'If the user asks about the attached document, answer using it. ' : '') +
     'Respond with JSON: {"reply":"<your helpful answer>","sources":[<excerpt numbers used, or empty>]}';
 
   const data = await chatJSON({
@@ -139,6 +143,109 @@ export async function assistantChat({ role, messages, courseContext = '' }) {
     reply: data.reply.trim(),
     sources: Array.isArray(data.sources) ? data.sources.map(Number).filter(Boolean) : [],
   };
+}
+
+/* --------------------------- Document Q&A (study) --------------------------- */
+
+const DOC_QA_SYSTEM =
+  'You are a precise study assistant. Answer the user\'s question using ONLY the ' +
+  'provided document text. If the answer is not in the document, say so honestly ' +
+  'instead of inventing facts. You ALWAYS respond with strict JSON only.';
+
+/**
+ * Answer a question grounded strictly in an uploaded document's text.
+ * @returns {Promise<{answer:string, found:boolean}>}
+ */
+export async function answerFromDocument({ documentText, question, history = [] }) {
+  const convo = history
+    .slice(-4)
+    .map((m) => `${m.role === 'user' ? 'Q' : 'A'}: ${m.content}`)
+    .join('\n');
+
+  const user = `DOCUMENT:\n"""\n${String(documentText).slice(0, 24000)}\n"""\n\n${
+    convo ? `EARLIER IN THIS CHAT:\n${convo}\n\n` : ''
+  }QUESTION: ${question}\n\nRespond with JSON: {"answer":"<clear answer grounded in the document>","found": true or false}`;
+
+  const data = await chatJSON({
+    system: DOC_QA_SYSTEM,
+    user,
+    validate: (o) => o && typeof o.answer === 'string',
+    temperature: 0.2,
+  });
+
+  return { answer: data.answer.trim(), found: data.found !== false };
+}
+
+/* ------------------------------- Flashcards --------------------------------- */
+
+const FLASH_SYSTEM =
+  'You are an expert tutor who writes concise, accurate study flashcards. ' +
+  'You ALWAYS respond with strict JSON only.';
+
+/**
+ * Generate study flashcards from a topic (or from supplied material).
+ * @returns {Promise<Array<{front:string, back:string}>>}
+ */
+export async function generateFlashcards({ topic = '', count = 10, context = '' } = {}) {
+  const n = Math.min(Math.max(count, 3), 20);
+  const user = `Create ${n} study flashcards ${
+    context ? 'based on the MATERIAL below' : `about the topic: ${topic}`
+  }.
+${context ? `MATERIAL:\n"""\n${String(context).slice(0, 12000)}\n"""\n` : ''}
+Respond with JSON: {"cards":[{"front":"<question or term>","back":"<concise, correct answer>"}]}
+Rules:
+- EXACTLY ${n} cards, each distinct.
+- "front" is a short prompt/term; "back" is a clear answer (1-3 sentences).`;
+
+  const data = await chatJSON({
+    system: FLASH_SYSTEM,
+    user,
+    validate: (o) =>
+      o && Array.isArray(o.cards) && o.cards.length > 0 && o.cards.every((c) => c.front && c.back),
+    temperature: 0.6,
+  });
+
+  return data.cards
+    .map((c) => ({ front: String(c.front).trim(), back: String(c.back).trim() }))
+    .slice(0, n);
+}
+
+/* ------------------------------- Mock tests --------------------------------- */
+
+const MOCK_SYSTEM =
+  'You are an expert exam writer. You write clear, unambiguous multiple-choice ' +
+  'questions to test a learner. You ALWAYS respond with strict JSON only.';
+
+/**
+ * Generate a topic-based mock test (MCQs with explanations).
+ * @returns {Promise<Array<{question,options,correctIndex,explanation}>>}
+ */
+export async function generateMockTest({ topic = '', numQuestions = 5, difficulty = 'medium', context = '' } = {}) {
+  const n = Math.min(Math.max(numQuestions, 1), 15);
+  const user = `Create a ${difficulty}-difficulty mock test of ${n} multiple-choice questions ${
+    context ? 'based on the MATERIAL below' : `about the topic: ${topic}`
+  }.
+${context ? `MATERIAL:\n"""\n${String(context).slice(0, 12000)}\n"""\n` : ''}
+Respond with JSON of EXACTLY this shape:
+{"questions":[{"question":"...","options":["...","...","...","..."],"correctIndex":0,"explanation":"why the correct option is correct"}]}
+Rules:
+- Exactly 4 options per question.
+- "correctIndex" is the 0-based index of the correct option.
+- Make questions ${difficulty} difficulty, clear and unambiguous.`;
+
+  const data = await chatJSON({
+    system: MOCK_SYSTEM,
+    user,
+    validate: validQuiz,
+    temperature: 0.5,
+  });
+
+  return data.questions.map((q) => ({
+    question: String(q.question).trim(),
+    options: q.options.map((o) => String(o)),
+    correctIndex: q.correctIndex,
+    explanation: q.explanation ? String(q.explanation).trim() : '',
+  }));
 }
 
 /* ------------------------------ Avatar seeds -------------------------------- */

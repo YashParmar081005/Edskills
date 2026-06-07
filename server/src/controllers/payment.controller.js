@@ -7,6 +7,7 @@ import { Enrollment } from '../models/Enrollment.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ensureEnrollment } from '../services/enrollment.service.js';
+import { splitRevenue } from '../config/revenue.js';
 
 function assertStripe() {
   if (!isStripeConfigured) {
@@ -79,16 +80,24 @@ async function fulfillSession(session) {
   const studentId = session.metadata?.studentId;
   if (!courseId || !studentId) return;
 
+  const amount = (session.amount_total || 0) / 100;
+  const { platformFee, instructorEarning } = splitRevenue(amount);
+
   await Payment.findOneAndUpdate(
     { stripeSessionId: session.id },
     {
-      $set: { status: 'paid' },
+      // Authoritative paid amount + 90/10 split recorded on fulfillment.
+      $set: {
+        status: 'paid',
+        amount,
+        currency: session.currency || env.stripeCurrency,
+        platformFee,
+        instructorEarning,
+      },
       $setOnInsert: {
         student: studentId,
         course: courseId,
         stripeSessionId: session.id,
-        amount: (session.amount_total || 0) / 100,
-        currency: session.currency || env.stripeCurrency,
       },
     },
     { upsert: true, setDefaultsOnInsert: true }

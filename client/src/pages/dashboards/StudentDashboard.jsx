@@ -1,4 +1,14 @@
-import { Compass, GraduationCap, PlayCircle, FileQuestion, MessagesSquare, Award } from 'lucide-react';
+import {
+  Compass,
+  GraduationCap,
+  PlayCircle,
+  FileQuestion,
+  MessagesSquare,
+  Award,
+  FileText,
+  Layers,
+  ClipboardList,
+} from 'lucide-react';
 import DashboardScaffold from '../../features/dashboard/DashboardScaffold.jsx';
 
 const accent = {
@@ -15,6 +25,9 @@ const cards = [
   { Icon: FileQuestion, label: 'Quizzes', desc: 'Test yourself with AI-graded quizzes.', to: '/student/quizzes' },
   { Icon: MessagesSquare, label: 'Ask & Discuss', desc: 'Course forums + AI Q&A in each course.', to: '/student/discuss' },
   { Icon: Award, label: 'Certificates', desc: 'Earn & download certificates.', to: '/student/certificates' },
+  { Icon: FileText, label: 'Doc Q&A', desc: 'Upload a PDF/doc and ask questions about it.', to: '/student/tools?tab=doc' },
+  { Icon: Layers, label: 'Flashcards', desc: 'AI-generated flashcards on any topic.', to: '/student/tools?tab=cards' },
+  { Icon: ClipboardList, label: 'Mock Test', desc: 'AI mock tests by topic & difficulty.', to: '/student/tools?tab=mock' },
 ];
 
 export default function StudentDashboard() {

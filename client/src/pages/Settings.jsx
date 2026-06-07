@@ -98,7 +98,7 @@ export default function Settings() {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
   };
 
   if (!user) return null;

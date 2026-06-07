@@ -1,20 +1,34 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bot, X, Send, BookOpen, Loader2, Sparkles } from 'lucide-react';
-import { chatAssistant } from '../../api/ai.js';
+import toast from 'react-hot-toast';
+import {
+  Bot,
+  X,
+  Send,
+  BookOpen,
+  Loader2,
+  Mic,
+  Paperclip,
+  FileText,
+} from 'lucide-react';
+import { chatAssistant, extractDoc } from '../../api/ai.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 const GREETING = {
   role: 'assistant',
   content:
-    "Hi! I'm your EdSkill.ai assistant. Ask me how to use the platform, or anything about the course you're viewing.",
+    "Hi! I'm your EdSkill.ai assistant. Ask me anything — you can also speak with the mic or attach a PDF/doc to ask about it.",
   citations: [],
 };
 
+// Browser speech-to-text (Chrome/Edge/Safari). Null when unsupported.
+const SpeechRecognition =
+  typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+
 /**
  * Universal floating AI assistant (bottom-right, on every authenticated page).
- * Course-aware: when the URL points at a course, answers can be grounded in
- * that course's lessons (with citations).
+ * Course-aware (cites lessons), supports voice input and attaching a document
+ * to ask questions about it.
  */
 export default function AiAgent() {
   const { pathname } = useLocation();
@@ -23,6 +37,17 @@ export default function AiAgent() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([GREETING]);
   const [loading, setLoading] = useState(false);
+
+  // Attached document (text extracted server-side).
+  const [doc, setDoc] = useState(null); // { name, chars, text }
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const fileRef = useRef(null);
+
+  // Voice input.
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef(null);
+  const voiceBaseRef = useRef('');
+
   const scrollRef = useRef(null);
 
   // Detect a course id in the current route (/learn/:id or /courses/:id/...).
@@ -33,12 +58,77 @@ export default function AiAgent() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading, open]);
 
+  // Stop listening if the panel closes.
+  useEffect(() => {
+    if (!open && recognitionRef.current) recognitionRef.current.stop();
+  }, [open]);
+
   if (!isAuthenticated) return null;
 
+  /* ------------------------------- Voice input ----------------------------- */
+  const toggleVoice = () => {
+    if (!SpeechRecognition) {
+      toast.error('Voice input is not supported in this browser.');
+      return;
+    }
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const rec = new SpeechRecognition();
+    rec.lang = 'en-US';
+    rec.interimResults = true;
+    rec.continuous = false;
+    voiceBaseRef.current = input ? input.trim() + ' ' : '';
+
+    rec.onresult = (e) => {
+      let transcript = '';
+      for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+      setInput(voiceBaseRef.current + transcript);
+    };
+    rec.onerror = (e) => {
+      setListening(false);
+      if (e.error !== 'aborted' && e.error !== 'no-speech') {
+        toast.error(e.error === 'not-allowed' ? 'Microphone permission denied.' : 'Voice input error.');
+      }
+    };
+    rec.onend = () => setListening(false);
+
+    recognitionRef.current = rec;
+    rec.start();
+    setListening(true);
+  };
+
+  /* ------------------------------ File upload ------------------------------ */
+  const onFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingDoc(true);
+    try {
+      const data = await extractDoc(file);
+      setDoc(data);
+      setMessages((m) => [
+        ...m,
+        {
+          role: 'assistant',
+          content: `📎 Attached "${data.name}". Ask me anything about it.`,
+          citations: [],
+        },
+      ]);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not read that file');
+    } finally {
+      setUploadingDoc(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  /* -------------------------------- Send ----------------------------------- */
   const send = async (e) => {
     e.preventDefault();
     const text = input.trim();
     if (!text || loading) return;
+    if (listening) recognitionRef.current?.stop();
     const next = [...messages, { role: 'user', content: text }];
     setMessages(next);
     setInput('');
@@ -46,7 +136,8 @@ export default function AiAgent() {
     try {
       const { reply, citations } = await chatAssistant(
         next.filter((m) => m !== GREETING).map((m) => ({ role: m.role, content: m.content })),
-        courseId
+        courseId,
+        doc?.text
       );
       setMessages((m) => [...m, { role: 'assistant', content: reply, citations: citations || [] }]);
     } catch (err) {
@@ -62,6 +153,12 @@ export default function AiAgent() {
       setLoading(false);
     }
   };
+
+  const subtitle = doc
+    ? `Answering from “${doc.name}”`
+    : courseId
+      ? 'Course-aware · answers from lessons'
+      : 'Platform & study help';
 
   return (
     <>
@@ -79,11 +176,9 @@ export default function AiAgent() {
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-brand-600 text-white">
               <Bot className="h-5 w-5" />
             </span>
-            <div className="leading-tight">
+            <div className="min-w-0 leading-tight">
               <h3 className="font-bold text-slate-900 dark:text-white">AI Assistant</h3>
-              <p className="text-[11px] text-slate-400">
-                {courseId ? 'Course-aware · answers from lessons' : 'Platform & study help'}
-              </p>
+              <p className="truncate text-[11px] text-slate-400">{subtitle}</p>
             </div>
           </div>
 
@@ -121,11 +216,56 @@ export default function AiAgent() {
             )}
           </div>
 
-          <form onSubmit={send} className="flex items-center gap-2 border-t border-slate-200 p-3 dark:border-white/10">
+          {/* Attached-document chip */}
+          {doc && (
+            <div className="flex items-center gap-2 border-t border-slate-200 bg-sky-500/5 px-3 py-2 dark:border-white/10">
+              <FileText className="h-4 w-4 shrink-0 text-brand-500" />
+              <span className="min-w-0 flex-1 truncate text-xs text-slate-600 dark:text-slate-300">
+                {doc.name}
+              </span>
+              <button
+                onClick={() => setDoc(null)}
+                className="icon-btn h-7 w-7"
+                title="Remove attachment"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={send} className="flex items-center gap-1.5 border-t border-slate-200 p-3 dark:border-white/10">
+            {/* Attach file */}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploadingDoc}
+              className="icon-btn h-9 w-9 shrink-0"
+              title="Attach a PDF / document"
+            >
+              {uploadingDoc ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf,.docx,.txt,.md,application/pdf,text/plain"
+              className="hidden"
+              onChange={onFile}
+            />
+
+            {/* Voice */}
+            <button
+              type="button"
+              onClick={toggleVoice}
+              className={`icon-btn h-9 w-9 shrink-0 ${listening ? 'animate-pulse !bg-rose-500/20 !text-rose-500' : ''}`}
+              title={listening ? 'Stop listening' : 'Speak'}
+            >
+              <Mic className="h-4 w-4" />
+            </button>
+
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={courseId ? 'Ask about this course…' : 'Ask me anything…'}
+              placeholder={listening ? 'Listening…' : doc ? 'Ask about the file…' : 'Ask me anything…'}
               className="glass-input !py-2 text-sm"
             />
             <button type="submit" disabled={loading || !input.trim()} className="btn-primary shrink-0 !px-3 !py-2">

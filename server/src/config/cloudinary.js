@@ -23,25 +23,36 @@ if (isCloudinaryConfigured) {
 
 /**
  * Upload an in-memory file buffer to Cloudinary.
+ *
+ * For large files (video) set `chunked: true` — this sends the file in smaller
+ * chunks (each its own short HTTP request), which avoids Cloudinary's ~60s
+ * per-request timeout that otherwise 500s long video uploads.
+ *
  * @param {Buffer} buffer
- * @param {object} options - { folder, resourceType: 'video'|'image'|'auto' }
+ * @param {object} options - { folder, resourceType, chunked, chunkSize, timeout }
  * @returns {Promise<{ url, publicId, duration, bytes, format }>}
  */
-export function uploadBuffer(buffer, { folder = 'ai-lms', resourceType = 'auto' } = {}) {
+export function uploadBuffer(
+  buffer,
+  { folder = 'ai-lms', resourceType = 'auto', chunked = false, chunkSize = 6_000_000, timeout = 120_000 } = {}
+) {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: resourceType },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve({
-          url: result.secure_url,
-          publicId: result.public_id,
-          duration: result.duration ? Math.round(result.duration) : 0,
-          bytes: result.bytes,
-          format: result.format,
-        });
-      }
-    );
+    const opts = { folder, resource_type: resourceType, timeout };
+    const handle = (error, result) => {
+      if (error) return reject(error);
+      resolve({
+        url: result.secure_url,
+        publicId: result.public_id,
+        duration: result.duration ? Math.round(result.duration) : 0,
+        bytes: result.bytes,
+        format: result.format,
+      });
+    };
+
+    const stream = chunked
+      ? cloudinary.uploader.upload_chunked_stream({ ...opts, chunk_size: chunkSize }, handle)
+      : cloudinary.uploader.upload_stream(opts, handle);
+
     stream.end(buffer);
   });
 }

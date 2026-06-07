@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Plus,
   BookOpen,
@@ -99,6 +99,18 @@ export default function CourseList() {
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState(null); // course to edit details
   const [deleting, setDeleting] = useState(null);
+
+  // When arriving from the "Course Builder" card (/instructor/courses?new=1),
+  // jump straight into creating a course, then clean the URL.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowCreate(true);
+      searchParams.delete('new');
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCreate = (payload) => {
     createMut.mutate(payload, {

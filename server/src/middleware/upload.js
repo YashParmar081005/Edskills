@@ -29,6 +29,23 @@ export const uploadAny = multer({
   limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB
 }).single('file');
 
+// Documents for AI study tools (PDF / DOCX / TXT / MD).
+export const uploadDoc = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
+  fileFilter: (req, file, cb) => {
+    const okTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'text/markdown',
+    ];
+    const okExt = /\.(pdf|docx|txt|md)$/i.test(file.originalname);
+    if (okTypes.includes(file.mimetype) || okExt) cb(null, true);
+    else cb(new ApiError(400, 'Upload a PDF, DOCX, TXT or MD file.'));
+  },
+}).single('file');
+
 /**
  * Wrap a multer middleware so its errors (size/type) become clean ApiErrors
  * handled by the central error handler instead of crashing.

@@ -72,7 +72,8 @@ export default function AdminAnalytics() {
         <StatCard icon={Users} label="Students" value={data.totals.students} />
         <StatCard icon={GraduationCap} label="Instructors" value={data.totals.instructors} accent="from-amber-400 to-orange-500" />
         <StatCard icon={BookOpen} label="Published courses" value={data.totals.published} accent="from-green-400 to-emerald-600" />
-        <StatCard icon={DollarSign} label="Revenue" value={`$${data.totals.revenue}`} accent="from-violet-400 to-purple-600" />
+        <StatCard icon={DollarSign} label="Gross revenue" value={`$${data.totals.revenue}`} accent="from-violet-400 to-purple-600" />
+        <StatCard icon={DollarSign} label="Platform earnings (10%)" value={`$${data.totals.platformEarnings ?? 0}`} accent="from-green-400 to-emerald-600" />
         <StatCard icon={Users} label="Enrollments" value={data.totals.enrollments} />
         <StatCard icon={Award} label="Certificates" value={data.totals.certificates} accent="from-rose-400 to-pink-600" />
         <StatCard icon={BarChart3} label="Quiz attempts" value={data.totals.quizAttempts} accent="from-sky-400 to-cyan-600" />

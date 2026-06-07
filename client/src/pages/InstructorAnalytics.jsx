@@ -15,6 +15,7 @@ import {
   Users,
   Percent,
   ListChecks,
+  DollarSign,
   LineChart as LineChartIcon,
 } from 'lucide-react';
 import { getInstructorAnalytics } from '../api/analytics.js';
@@ -63,7 +64,10 @@ export default function InstructorAnalytics() {
     Enrollments: c.enrollments,
     'Completion %': c.completionRate,
     'Quiz avg %': c.avgQuizScore,
+    Revenue: c.revenue,
   }));
+  const hasRevenue = (data?.totals?.grossRevenue || 0) > 0;
+  const instructorPct = Math.round((data?.revenueShare?.instructor ?? 0.9) * 100);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -74,6 +78,37 @@ export default function InstructorAnalytics() {
         <h1 className="flex items-center gap-2 text-2xl font-extrabold text-slate-900 dark:text-white">
           <LineChartIcon className="h-6 w-6 text-brand-500" /> Analytics
         </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          You keep <span className="font-semibold text-brand-600 dark:text-brand-300">{instructorPct}%</span> of
+          every sale — the platform retains a {100 - instructorPct}% fee.
+        </p>
+      </div>
+
+      {/* Revenue highlight */}
+      <div className="glass-card flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 text-white">
+            <DollarSign className="h-7 w-7" />
+          </div>
+          <div>
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white">
+              ${data.totals.revenue}
+            </p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              Your revenue ({instructorPct}% share)
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-6 text-sm">
+          <div>
+            <p className="font-bold text-slate-700 dark:text-slate-200">${data.totals.grossRevenue}</p>
+            <p className="text-xs text-slate-400">Gross sales</p>
+          </div>
+          <div>
+            <p className="font-bold text-slate-700 dark:text-slate-200">${data.totals.platformFee}</p>
+            <p className="text-xs text-slate-400">Platform fee ({100 - instructorPct}%)</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -109,6 +144,18 @@ export default function InstructorAnalytics() {
               <Bar dataKey="Quiz avg %" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ChartCard>
+
+          {hasRevenue && (
+            <ChartCard title={`Your revenue per course ($ — ${instructorPct}% share)`}>
+              <BarChart data={courses}>
+                <CartesianGrid strokeDasharray="3 3" stroke={grid} />
+                <XAxis dataKey="name" tick={{ fill: axis, fontSize: 12 }} />
+                <YAxis tick={{ fill: axis, fontSize: 12 }} />
+                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(34,197,94,0.1)' }} formatter={(v) => `$${v}`} />
+                <Bar dataKey="Revenue" fill="#10b981" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ChartCard>
+          )}
         </div>
       )}
     </div>

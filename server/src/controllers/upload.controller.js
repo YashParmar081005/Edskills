@@ -19,10 +19,30 @@ export const uploadVideoFile = asyncHandler(async (req, res) => {
   assertConfigured();
   if (!req.file) throw new ApiError(400, 'No video file provided.');
 
-  const result = await uploadBuffer(req.file.buffer, {
-    folder: 'ai-lms/videos',
-    resourceType: 'video',
-  });
+  let result;
+  try {
+    result = await uploadBuffer(req.file.buffer, {
+      folder: 'ai-lms/videos',
+      resourceType: 'video',
+      chunked: true, // chunked upload — avoids the ~60s per-request timeout
+      chunkSize: 6_000_000, // 6 MB chunks
+      timeout: 600_000, // 10 min ceiling for the whole upload
+    });
+  } catch (err) {
+    const msg = err?.message || 'Upload failed';
+    // Cloudinary free plans cap video at 100 MB; surface that clearly.
+    if (/file size too large|maximum.*allowed|too large/i.test(msg)) {
+      throw new ApiError(
+        413,
+        'That video is too large for the current Cloudinary plan (free plans cap video at 100 MB). ' +
+          'Use a smaller file or paste a hosted video URL instead.'
+      );
+    }
+    if (/timeout|timed out/i.test(msg)) {
+      throw new ApiError(504, 'The upload timed out. Check your connection and try a smaller file.');
+    }
+    throw new ApiError(502, `Video upload failed: ${msg}`);
+  }
 
   res.status(201).json({
     success: true,
