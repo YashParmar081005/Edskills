@@ -31,7 +31,7 @@ export function generateCertificatePdf({
       .fillColor('#0ea5e9')
       .font('Helvetica-Bold')
       .fontSize(16)
-      .text('AI LMS', 0, 72, { align: 'center' });
+      .text('EdSkill.ai', 0, 72, { align: 'center' });
 
     // Title
     doc

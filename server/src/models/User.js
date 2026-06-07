@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    settings: {
+      emailNotifications: { type: Boolean, default: true },
+      reminderEmails: { type: Boolean, default: true },
+      productUpdates: { type: Boolean, default: true },
+    },
     refreshToken: {
       type: String,
       select: false,
@@ -60,12 +65,18 @@ userSchema.methods.comparePassword = function (plain) {
 
 /** Public-safe representation (strips sensitive fields). */
 userSchema.methods.toSafeJSON = function () {
+  const s = this.settings || {};
   return {
     id: this._id,
     name: this.name,
     email: this.email,
     role: this.role,
     avatar: this.avatar,
+    settings: {
+      emailNotifications: s.emailNotifications !== false,
+      reminderEmails: s.reminderEmails !== false,
+      productUpdates: s.productUpdates !== false,
+    },
     createdAt: this.createdAt,
   };
 };

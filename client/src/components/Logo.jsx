@@ -9,7 +9,7 @@ export default function Logo({ withText = true, className = '' }) {
       {withText && (
         <div className="leading-tight">
           <span className="block bg-gradient-to-r from-sky-500 to-brand-600 bg-clip-text text-lg font-extrabold text-transparent dark:from-sky-300 dark:to-brand-400">
-            AI&nbsp;LMS
+            EdSkill.ai
           </span>
           <span className="block text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-slate-400">
             Learn smarter

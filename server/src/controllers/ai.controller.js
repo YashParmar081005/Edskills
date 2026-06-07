@@ -6,6 +6,7 @@ import { ensureCourseOwner } from '../utils/courseAccess.js';
 import {
   generateQuizQuestions,
   gradeOpenAnswer,
+  generateAvatarSeeds,
   isAIConfigured,
 } from '../services/ai/index.js';
 
@@ -51,6 +52,75 @@ export const generateQuiz = asyncHandler(async (req, res) => {
   } catch (err) {
     throw new ApiError(502, `Quiz generation failed: ${err.message}`);
   }
+});
+
+/* -------------------------------- AI avatars -------------------------------- */
+
+// Cartoon avatar styles rendered deterministically by DiceBear from a seed.
+const AVATAR_STYLES = [
+  'adventurer',
+  'avataaars',
+  'bottts',
+  'fun-emoji',
+  'lorelei',
+  'notionists',
+  'micah',
+  'personas',
+  'thumbs',
+  'big-smile',
+  'open-peeps',
+  'pixel-art',
+];
+
+// Blue / sky palette (no '#') to match the app theme.
+const AVATAR_BG = '0ea5e9,38bdf8,2563eb,60a5fa,93c5fd,c0aede';
+
+function buildAvatarUrl(style, seed) {
+  const s = encodeURIComponent(seed);
+  return `https://api.dicebear.com/9.x/${style}/svg?seed=${s}&radius=18&backgroundColor=${AVATAR_BG}`;
+}
+
+/**
+ * POST /api/ai/avatar   (any authenticated user)
+ * Body: { prompt? }
+ * Returns a set of AI-themed avatar options. The LLM invents the persona seeds;
+ * DiceBear renders them. Always returns options even if the LLM is unavailable.
+ */
+export const generateAvatar = asyncHandler(async (req, res) => {
+  const count = 8;
+  const prompt =
+    typeof req.body?.prompt === 'string' ? req.body.prompt.trim().slice(0, 120) : '';
+  const name = req.user?.name || '';
+
+  let seeds = [];
+  let aiUsed = false;
+
+  if (isAIConfigured()) {
+    try {
+      seeds = await generateAvatarSeeds({ name, prompt, count });
+      aiUsed = seeds.length > 0;
+    } catch {
+      seeds = []; // fall back below
+    }
+  }
+
+  // Top up (or fully populate) with varied deterministic seeds so the button
+  // always works — even without an LLM key or if generation partially fails.
+  if (seeds.length < count) {
+    const base = (prompt || name || 'avatar').replace(/\s+/g, '-').toLowerCase();
+    const spice = ['nova', 'spark', 'pixel', 'orbit', 'echo', 'lumen', 'quartz', 'zephyr'];
+    const salt = Date.now() % 100000;
+    for (let i = seeds.length; i < count; i++) {
+      seeds.push(`${base}-${spice[i % spice.length]}-${salt}-${i}`);
+    }
+  }
+
+  const avatars = seeds.slice(0, count).map((seed, i) => {
+    const style = AVATAR_STYLES[i % AVATAR_STYLES.length];
+    return { url: buildAvatarUrl(style, seed), style, seed };
+  });
+
+  res.json({ success: true, avatars, aiUsed });
 });
 
 /**

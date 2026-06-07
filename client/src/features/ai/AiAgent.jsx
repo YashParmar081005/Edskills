@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 const GREETING = {
   role: 'assistant',
   content:
-    "Hi! I'm your AI LMS assistant. Ask me how to use the platform, or anything about the course you're viewing.",
+    "Hi! I'm your EdSkill.ai assistant. Ask me how to use the platform, or anything about the course you're viewing.",
   citations: [],
 };
 

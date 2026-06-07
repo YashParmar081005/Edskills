@@ -13,6 +13,9 @@ import {
   KeyRound,
   Eye,
   EyeOff,
+  Sparkles,
+  Wand2,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
@@ -20,6 +23,7 @@ import {
   changePasswordRequest,
   uploadAvatarRequest,
 } from '../api/auth.js';
+import { generateAvatars } from '../api/ai.js';
 import { setAccessToken } from '../api/axios.js';
 import Spinner from '../components/Spinner.jsx';
 
@@ -51,6 +55,24 @@ export default function Profile() {
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // ---- AI avatar generator ------------------------------------------------
+  const [avatarPrompt, setAvatarPrompt] = useState('');
+  const [avatarOptions, setAvatarOptions] = useState([]);
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const { avatars } = await generateAvatars(avatarPrompt.trim());
+      setAvatarOptions(avatars || []);
+      if (!avatars?.length) toast.error('No avatars came back — try again');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not generate avatars');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const dirty =
     form.name.trim() !== user?.name ||
@@ -222,17 +244,71 @@ export default function Profile() {
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
-            Avatar URL <span className="text-slate-400">(or use the camera button above)</span>
-          </label>
-          <input
-            name="avatar"
-            value={form.avatar}
-            onChange={onChange}
-            placeholder="https://…"
-            className="glass-input text-sm"
-          />
+        {/* AI avatar generator (replaces the manual URL field) */}
+        <div className="rounded-2xl border border-sky-400/30 bg-sky-400/[0.06] p-4">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-brand-600 text-white">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                Generate an avatar with AI
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Describe a vibe and let AI design unique avatars for you.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              value={avatarPrompt}
+              onChange={(e) => setAvatarPrompt(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !generating && (e.preventDefault(), handleGenerate())}
+              placeholder="e.g. friendly robot, cosmic explorer, minimalist…"
+              className="glass-input text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generating}
+              className="btn-primary shrink-0 whitespace-nowrap"
+            >
+              {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+              {generating ? 'Generating…' : avatarOptions.length ? 'Regenerate' : 'Generate with AI'}
+            </button>
+          </div>
+
+          {avatarOptions.length > 0 && (
+            <>
+              <p className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+                Pick one, then hit “Save changes”:
+              </p>
+              <div className="mt-2 grid grid-cols-4 gap-3 sm:grid-cols-8">
+                {avatarOptions.map((a) => {
+                  const selected = form.avatar === a.url;
+                  return (
+                    <button
+                      key={a.url}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, avatar: a.url }))}
+                      title={a.seed}
+                      className={`relative aspect-square overflow-hidden rounded-xl ring-2 transition hover:scale-105 ${
+                        selected ? 'ring-brand-500' : 'ring-transparent hover:ring-sky-400/50'
+                      }`}
+                    >
+                      <img src={a.url} alt={a.seed} className="h-full w-full bg-white/60 object-cover" />
+                      {selected && (
+                        <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-white shadow">
+                          <Check className="h-3 w-3" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex justify-end pt-1">

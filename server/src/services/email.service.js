@@ -48,7 +48,7 @@ async function send({ to, subject, html, text }) {
 const shell = (title, body) =>
   `<div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto">
     <div style="background:linear-gradient(135deg,#38bdf8,#2563eb);padding:20px;border-radius:14px 14px 0 0">
-      <h1 style="color:#fff;margin:0;font-size:20px">AI LMS</h1>
+      <h1 style="color:#fff;margin:0;font-size:20px">EdSkill.ai</h1>
     </div>
     <div style="border:1px solid #e2e8f0;border-top:0;border-radius:0 0 14px 14px;padding:24px;color:#0f172a">
       <h2 style="margin:0 0 12px">${title}</h2>
@@ -59,10 +59,12 @@ const shell = (title, body) =>
 /** Welcome email when a student enrolls (fire-and-forget). */
 export async function sendEnrollmentEmail(studentId, courseId) {
   const [user, course] = await Promise.all([
-    User.findById(studentId).select('name email').lean(),
+    User.findById(studentId).select('name email settings').lean(),
     Course.findById(courseId).select('title').lean(),
   ]);
   if (!user?.email || !course) return;
+  // Respect the student's email-notification preference.
+  if (user.settings?.emailNotifications === false) return;
   await send({
     to: user.email,
     subject: `You're enrolled in ${course.title}`,
@@ -106,10 +108,13 @@ export async function checkAndSendReminders() {
   for (const a of assignments) {
     if (!a.course) continue;
     const enrollments = await Enrollment.find({ course: a.course._id })
-      .populate('student', 'name email')
+      .populate('student', 'name email settings')
       .lean();
     for (const e of enrollments) {
       if (!e.student?.email) continue;
+      // Skip students who opted out of reminder / email notifications.
+      if (e.student.settings?.emailNotifications === false) continue;
+      if (e.student.settings?.reminderEmails === false) continue;
       const submitted = await Submission.exists({ assignment: a._id, student: e.student._id });
       if (submitted) continue;
       await sendDueReminder(e.student, a, a.course.title).catch(() => {});

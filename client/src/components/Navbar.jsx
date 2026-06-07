@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, NavLink, Link } from 'react-router-dom';
-import { LogOut, ChevronDown, ShieldCheck, UserCog } from 'lucide-react';
+import { LogOut, ChevronDown, ShieldCheck, UserCog, SlidersHorizontal } from 'lucide-react';
 import { useAuth, DASHBOARD_BY_ROLE } from '../context/AuthContext.jsx';
 import Logo from './Logo.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
@@ -127,6 +127,14 @@ export default function Navbar() {
                   >
                     <UserCog className="h-4 w-4 text-brand-500" />
                     My profile
+                  </Link>
+                  <Link
+                    to="/settings"
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white/40 dark:text-slate-200 dark:hover:bg-white/5"
+                  >
+                    <SlidersHorizontal className="h-4 w-4 text-brand-500" />
+                    Settings
                   </Link>
                   <button
                     onClick={handleLogout}

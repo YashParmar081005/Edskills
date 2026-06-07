@@ -160,6 +160,24 @@ export const updateMe = asyncHandler(async (req, res) => {
 });
 
 /**
+ * PATCH /api/auth/me/settings  (protected)
+ * Update the signed-in user's notification preferences.
+ */
+export const updateSettings = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) throw new ApiError(404, 'Account not found.');
+  if (!user.settings) user.settings = {};
+
+  const { emailNotifications, reminderEmails, productUpdates } = req.body;
+  if (typeof emailNotifications === 'boolean') user.settings.emailNotifications = emailNotifications;
+  if (typeof reminderEmails === 'boolean') user.settings.reminderEmails = reminderEmails;
+  if (typeof productUpdates === 'boolean') user.settings.productUpdates = productUpdates;
+
+  await user.save();
+  res.json({ success: true, user: user.toSafeJSON() });
+});
+
+/**
  * POST /api/auth/me/password  (protected)
  * Change the signed-in user's password after verifying the current one.
  * Rotates the refresh token so other sessions are invalidated.

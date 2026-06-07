@@ -36,7 +36,7 @@ export default function CertificateVerify() {
                 Verified Certificate
               </h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                This is an authentic AI LMS certificate.
+                This is an authentic EdSkill.ai certificate.
               </p>
 
               <div className="mt-6 space-y-3 rounded-xl bg-white/40 p-5 text-left dark:bg-white/5">

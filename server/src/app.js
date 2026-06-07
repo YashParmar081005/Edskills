@@ -59,7 +59,7 @@ export function createApp() {
   // Friendly root response
   app.get('/', (req, res) => {
     res.json({
-      name: 'AI LMS API',
+      name: 'EdSkill.ai API',
       status: 'running',
       health: '/api/health',
     });

@@ -10,7 +10,7 @@ import { generateCertificatePdf } from '../services/certificate.service.js';
 import { isCloudinaryConfigured, uploadBuffer } from '../config/cloudinary.js';
 
 function newCertificateId() {
-  return `AILMS-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
+  return `EDSKILL-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
 }
 
 async function courseCompletionPercent(studentId, courseId) {

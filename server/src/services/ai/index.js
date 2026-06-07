@@ -102,7 +102,7 @@ export async function answerCourseQuestion({ question, chunks }) {
 /* ---------------------------- Universal assistant --------------------------- */
 
 const ASSISTANT_SYSTEM = (role) =>
-  `You are the friendly AI assistant for "AI LMS", an AI-powered learning platform. ` +
+  `You are the friendly AI assistant for "EdSkill.ai", an AI-powered learning platform. ` +
   `The current user's role is ${role}. Help them use the platform — browsing & enrolling in ` +
   `courses, the lesson player and progress tracking, AI-generated quizzes, assignments, course ` +
   `discussion forums, certificates, and (for instructors/admins) the course builder & analytics. ` +
@@ -139,6 +139,39 @@ export async function assistantChat({ role, messages, courseContext = '' }) {
     reply: data.reply.trim(),
     sources: Array.isArray(data.sources) ? data.sources.map(Number).filter(Boolean) : [],
   };
+}
+
+/* ------------------------------ Avatar seeds -------------------------------- */
+
+const AVATAR_SYSTEM =
+  'You invent short, evocative "persona seed" phrases used to deterministically ' +
+  'generate cartoon profile-avatar art. You ALWAYS respond with strict JSON only.';
+
+/**
+ * Ask the LLM for `count` distinct, imaginative seed phrases for avatar art.
+ * Seeds are fed to a deterministic avatar renderer (DiceBear) on the client.
+ * @returns {Promise<string[]>}
+ */
+export async function generateAvatarSeeds({ name = '', prompt = '', count = 8 } = {}) {
+  const n = Math.min(Math.max(count, 1), 12);
+  const user = `Invent ${n} short, distinct, imaginative "persona seed" phrases for generating profile avatars.
+Requested vibe/theme: ${prompt || 'fun, friendly, professional and varied'}
+User's name (inspiration only, do not copy verbatim): ${name || '(anonymous)'}
+
+Respond with JSON: {"seeds":["...","..."]}
+Rules:
+- EXACTLY ${n} seeds.
+- Each seed is 1-4 words, vivid and distinct from the others.
+- No numbering, no surrounding quotes inside a seed, no emoji.`;
+
+  const data = await chatJSON({
+    system: AVATAR_SYSTEM,
+    user,
+    validate: (o) => o && Array.isArray(o.seeds) && o.seeds.length > 0,
+    temperature: 0.9,
+  });
+
+  return data.seeds.map((s) => String(s).trim()).filter(Boolean).slice(0, n);
 }
 
 /* -------------------------------- Auto-grading ------------------------------ */

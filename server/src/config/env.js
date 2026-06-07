@@ -48,7 +48,7 @@ export const env = {
     port: Number(process.env.EMAIL_PORT) || 587,
     user: process.env.EMAIL_USER || '',
     pass: process.env.EMAIL_PASS || '',
-    from: process.env.EMAIL_FROM || 'AI LMS <no-reply@ailms.dev>',
+    from: process.env.EMAIL_FROM || 'EdSkill.ai <no-reply@edskill.ai>',
   },
 };
 

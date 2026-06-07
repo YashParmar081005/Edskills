@@ -6,6 +6,7 @@ import {
   logout,
   me,
   updateMe,
+  updateSettings,
   changePassword,
 } from '../controllers/auth.controller.js';
 import {
@@ -26,6 +27,7 @@ router.post('/refresh', refresh);
 router.post('/logout', logout);
 router.get('/me', protect, me);
 router.patch('/me', protect, updateMeValidator, validate, updateMe);
+router.patch('/me/settings', protect, updateSettings);
 router.post('/me/password', protect, changePasswordValidator, validate, changePassword);
 
 export default router;

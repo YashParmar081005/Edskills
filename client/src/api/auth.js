@@ -42,6 +42,12 @@ export async function changePasswordRequest(payload) {
   return data;
 }
 
+/** PATCH /auth/me/settings → { user } — notification preferences */
+export async function updateSettingsRequest(payload) {
+  const { data } = await api.patch('/auth/me/settings', payload);
+  return data;
+}
+
 /** POST /upload/avatar (multipart "image") → { url } */
 export async function uploadAvatarRequest(file) {
   const form = new FormData();

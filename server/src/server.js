@@ -15,7 +15,7 @@ async function start() {
 
   const server = app.listen(env.port, () => {
     console.log('');
-    console.log('🚀 AI LMS API is running');
+    console.log('🚀 EdSkill.ai API is running');
     console.log(`   ➜  Local:   http://localhost:${env.port}`);
     console.log(`   ➜  Health:  http://localhost:${env.port}/api/health`);
     console.log(`   ➜  Env:     ${env.nodeEnv}`);

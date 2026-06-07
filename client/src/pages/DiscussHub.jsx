@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessagesSquare, Sparkles, BookOpen, Compass, GraduationCap } from 'lucide-react';
 import { useMyEnrollments } from '../features/learn/hooks.js';
 import Spinner from '../components/Spinner.jsx';
+import AskAiModal from '../features/ai/AskAiModal.jsx';
 
 export default function DiscussHub() {
   const { data: enrollments, isLoading } = useMyEnrollments();
+  const [askCourse, setAskCourse] = useState(null); // { id, title } or null
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -55,13 +58,25 @@ export default function DiscussHub() {
               <Link to={`/courses/${e.course?._id}/forum`} className="btn-primary flex-1 !py-2 text-xs">
                 <MessagesSquare className="h-3.5 w-3.5" /> Discussion
               </Link>
-              <Link to={`/learn/${e.course?._id}`} className="btn-ghost flex-1 !py-2 text-xs" title="Open course — Ask AI is inside">
+              <button
+                type="button"
+                onClick={() => setAskCourse({ id: e.course?._id, title: e.course?.title })}
+                className="btn-ghost flex-1 !py-2 text-xs"
+                title="Ask the AI assistant about this course"
+              >
                 <Sparkles className="h-3.5 w-3.5" /> Ask AI
-              </Link>
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      <AskAiModal
+        open={!!askCourse}
+        onClose={() => setAskCourse(null)}
+        courseId={askCourse?.id}
+        courseTitle={askCourse?.title}
+      />
     </div>
   );
 }

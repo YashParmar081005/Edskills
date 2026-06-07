@@ -31,6 +31,7 @@ import MyCertificates from './pages/MyCertificates.jsx';
 import MyQuizzes from './pages/MyQuizzes.jsx';
 import DiscussHub from './pages/DiscussHub.jsx';
 import Profile from './pages/Profile.jsx';
+import Settings from './pages/Settings.jsx';
 
 import GuestRoute from './routes/GuestRoute.jsx';
 import RoleRoute from './routes/RoleRoute.jsx';
@@ -60,6 +61,7 @@ export default function App() {
         {/* Shared authenticated pages (any logged-in user) */}
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/courses" element={<BrowseCourses />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
           <Route path="/learn/:courseId" element={<CoursePlayer />} />
