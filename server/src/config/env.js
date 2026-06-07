@@ -36,6 +36,20 @@ export const env = {
   aiProvider: process.env.AI_PROVIDER || 'groq',
   groqApiKey: process.env.GROQ_API_KEY || '',
   groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+
+  // Stripe (Phase 8 — payments)
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+  stripeCurrency: process.env.STRIPE_CURRENCY || 'usd',
+
+  // Email (Phase 9). Leave blank to use an auto Ethereal test inbox in dev.
+  email: {
+    host: process.env.EMAIL_HOST || '',
+    port: Number(process.env.EMAIL_PORT) || 587,
+    user: process.env.EMAIL_USER || '',
+    pass: process.env.EMAIL_PASS || '',
+    from: process.env.EMAIL_FROM || 'AI LMS <no-reply@ailms.dev>',
+  },
 };
 
 export const isProduction = env.nodeEnv === 'production';

@@ -20,6 +20,12 @@ export async function listCourseAssignments(courseId) {
   return data; // { assignments, isOwner }
 }
 
+/** GET /api/assignments/mine → { assignments, courses } (instructor, all courses) */
+export async function getMyAssignments() {
+  const { data } = await api.get('/assignments/mine');
+  return data;
+}
+
 export async function createAssignment(courseId, payload) {
   const { data } = await api.post(`/courses/${courseId}/assignments`, payload);
   return data.assignment;

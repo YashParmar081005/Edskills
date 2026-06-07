@@ -12,9 +12,9 @@ const cards = [
   { Icon: Compass, label: 'Browse Courses', desc: 'Discover and enroll in new courses.', to: '/courses' },
   { Icon: GraduationCap, label: 'My Learning', desc: 'Resume learning where you left off.', to: '/student/my-courses' },
   { Icon: PlayCircle, label: 'Lessons & Progress', desc: 'Watch lessons and track completion.', to: '/student/my-courses' },
-  { Icon: FileQuestion, label: 'Quizzes', desc: 'Test yourself with AI-graded quizzes.', soon: true },
-  { Icon: MessagesSquare, label: 'Ask & Discuss', desc: 'Get help in course forums + AI Q&A.', soon: true },
-  { Icon: Award, label: 'Certificates', desc: 'Earn certificates on completion.', soon: true },
+  { Icon: FileQuestion, label: 'Quizzes', desc: 'Test yourself with AI-graded quizzes.', to: '/student/quizzes' },
+  { Icon: MessagesSquare, label: 'Ask & Discuss', desc: 'Course forums + AI Q&A in each course.', to: '/student/discuss' },
+  { Icon: Award, label: 'Certificates', desc: 'Earn & download certificates.', to: '/student/certificates' },
 ];
 
 export default function StudentDashboard() {
@@ -23,7 +23,7 @@ export default function StudentDashboard() {
       accent={accent}
       badge="Student workspace"
       title="Welcome"
-      blurb="Your learning hub. Course browsing, the lesson player, quizzes, and certificates unlock in the coming phases."
+      blurb="Your learning hub — browse courses, learn, take AI quizzes, ask the course AI, and earn certificates."
       cards={cards}
     />
   );

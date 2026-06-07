@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, NavLink } from 'react-router-dom';
-import { LogOut, ChevronDown, ShieldCheck } from 'lucide-react';
+import { useNavigate, NavLink, Link } from 'react-router-dom';
+import { LogOut, ChevronDown, ShieldCheck, UserCog } from 'lucide-react';
 import { useAuth, DASHBOARD_BY_ROLE } from '../context/AuthContext.jsx';
 import Logo from './Logo.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
@@ -92,8 +92,12 @@ export default function Navbar() {
                 onClick={() => setOpen((o) => !o)}
                 className="btn-ghost !px-2 !py-1.5"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-brand-600 text-xs font-bold text-white">
-                  {initials(user.name)}
+                <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-sky-400 to-brand-600 text-xs font-bold text-white">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                  ) : (
+                    initials(user.name)
+                  )}
                 </span>
                 <span className="hidden text-left sm:block">
                   <span className="block text-sm font-semibold leading-none">
@@ -109,13 +113,21 @@ export default function Navbar() {
               </button>
 
               {open && (
-                <div className="glass-card absolute right-0 mt-2 w-56 animate-fade-in p-2">
+                <div className="solid-card absolute right-0 mt-2 w-56 animate-fade-in p-2">
                   <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm">
                     <ShieldCheck className="h-4 w-4 text-brand-500" />
                     <span className="truncate text-slate-600 dark:text-slate-300">
                       {user.email}
                     </span>
                   </div>
+                  <Link
+                    to="/profile"
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white/40 dark:text-slate-200 dark:hover:bg-white/5"
+                  >
+                    <UserCog className="h-4 w-4 text-brand-500" />
+                    My profile
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-500/10 dark:text-rose-300"

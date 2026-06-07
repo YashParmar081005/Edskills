@@ -79,7 +79,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="glass-card absolute right-0 mt-2 w-80 animate-fade-in overflow-hidden p-0">
+        <div className="solid-card absolute right-0 mt-2 w-80 animate-fade-in overflow-hidden p-0">
           <div className="flex items-center justify-between border-b border-white/30 px-4 py-3 dark:border-white/10">
             <h3 className="font-bold text-slate-900 dark:text-white">Notifications</h3>
             {unread > 0 && (

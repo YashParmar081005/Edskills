@@ -5,6 +5,7 @@ import { Lesson } from '../models/Lesson.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ensureCourseOwner } from '../utils/courseAccess.js';
+import { indexLesson, removeLessonIndex } from '../services/rag.service.js';
 
 /** Load a lesson + its course and assert ownership. */
 async function loadOwnedLesson(lessonId, user) {
@@ -45,6 +46,7 @@ export const addLesson = asyncHandler(async (req, res) => {
   });
   applyLessonFields(lesson, req.body);
   await lesson.save();
+  await indexLesson(lesson).catch(() => {}); // RAG index (non-fatal)
 
   res.status(201).json({ success: true, lesson });
 });
@@ -56,6 +58,7 @@ export const updateLesson = asyncHandler(async (req, res) => {
   const lesson = await loadOwnedLesson(req.params.id, req.user);
   applyLessonFields(lesson, req.body);
   await lesson.save();
+  await indexLesson(lesson).catch(() => {}); // re-index for RAG (non-fatal)
   res.json({ success: true, lesson });
 });
 
@@ -65,6 +68,7 @@ export const updateLesson = asyncHandler(async (req, res) => {
 export const deleteLesson = asyncHandler(async (req, res) => {
   const lesson = await loadOwnedLesson(req.params.id, req.user);
   await lesson.deleteOne();
+  await removeLessonIndex(lesson._id).catch(() => {});
   res.json({ success: true, message: 'Lesson deleted.' });
 });
 

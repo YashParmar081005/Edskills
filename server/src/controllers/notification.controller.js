@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 import { Notification } from '../models/Notification.js';
+import { User } from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
+import { emitToUser } from '../sockets/index.js';
 
 /** GET /api/notifications  → recent notifications + unread count */
 export const getNotifications = asyncHandler(async (req, res) => {
@@ -34,4 +36,24 @@ export const markAllRead = asyncHandler(async (req, res) => {
     { $set: { read: true } }
   );
   res.json({ success: true, unreadCount: 0 });
+});
+
+/** POST /api/notifications/broadcast  (admin) — announce to all users. */
+export const broadcast = asyncHandler(async (req, res) => {
+  const message = String(req.body.message || '').trim();
+  if (!message) throw new ApiError(400, 'A message is required.');
+
+  const users = await User.find({}).select('_id').lean();
+  const docs = users.map((u) => ({
+    user: u._id,
+    type: 'system',
+    message,
+    actor: req.user._id,
+  }));
+  const created = await Notification.insertMany(docs);
+
+  // Push live to everyone currently connected.
+  created.forEach((n) => emitToUser(n.user, 'notification:new', n));
+
+  res.json({ success: true, sent: created.length });
 });

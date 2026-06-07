@@ -17,6 +17,7 @@ import {
   listCourseAssignments,
 } from '../controllers/assignment.controller.js';
 import { listThreads, createThread } from '../controllers/forum.controller.js';
+import { getCourseCertificate } from '../controllers/certificate.controller.js';
 import { protect, authorize, optionalAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
@@ -48,6 +49,9 @@ router.post('/:id/assignments', ...instructor, createAssignment);
 /* ---------------------------------- Forum ----------------------------------- */
 router.get('/:id/threads', protect, listThreads);
 router.post('/:id/threads', protect, createThread);
+
+/* ------------------------------- Certificate -------------------------------- */
+router.get('/:id/certificate', protect, getCourseCertificate);
 
 /* --------------------------- Public-or-owner detail ------------------------- */
 router.get('/:id', optionalAuth, getCourse);

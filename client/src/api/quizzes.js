@@ -35,3 +35,15 @@ export async function getMyAttempt(id) {
   const { data } = await api.get(`/quizzes/${id}/my-attempt`);
   return data.attempt;
 }
+
+/** GET /api/quizzes/mine → quizzes across enrolled courses + last score */
+export async function getMyQuizzes() {
+  const { data } = await api.get('/quizzes/mine');
+  return data.quizzes;
+}
+
+/** GET /api/quizzes/instructor → quizzes across the instructor's courses */
+export async function getInstructorQuizzes() {
+  const { data } = await api.get('/quizzes/instructor');
+  return data.quizzes;
+}

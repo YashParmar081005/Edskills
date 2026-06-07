@@ -15,6 +15,12 @@ export async function getThread(threadId) {
   return data; // { thread, replies, canModerate, isThreadAuthor }
 }
 
+/** GET /api/threads/mine → threads across the instructor's courses */
+export async function getMyThreads() {
+  const { data } = await api.get('/threads/mine');
+  return data.threads;
+}
+
 export async function deleteThread(threadId) {
   const { data } = await api.delete(`/threads/${threadId}`);
   return data;

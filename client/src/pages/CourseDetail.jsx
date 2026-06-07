@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   ArrowLeft,
   PlayCircle,
@@ -10,9 +12,11 @@ import {
   Layers,
   CheckCircle2,
   Pencil,
+  CreditCard,
 } from 'lucide-react';
 import { usePublicCourse, useEnroll } from '../features/learn/hooks.js';
 import { priceLabel } from '../features/learn/PublicCourseCard.jsx';
+import { createCheckout } from '../api/payments.js';
 import Spinner from '../components/Spinner.jsx';
 
 function fmtDuration(s) {
@@ -26,6 +30,18 @@ export default function CourseDetail() {
   const navigate = useNavigate();
   const { data: course, isLoading, isError, error } = usePublicCourse(id);
   const enrollMut = useEnroll(id);
+  const [buying, setBuying] = useState(false);
+
+  const handleBuy = async () => {
+    setBuying(true);
+    try {
+      const { url } = await createCheckout(id);
+      window.location.href = url; // redirect to Stripe Checkout
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Could not start checkout');
+      setBuying(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -127,8 +143,9 @@ export default function CourseDetail() {
                 <PlayCircle className="h-4 w-4" /> Continue learning
               </Link>
             ) : course.price > 0 ? (
-              <button className="btn-primary w-full opacity-70" disabled title="Payments arrive in Phase 8">
-                <Lock className="h-4 w-4" /> Buy (coming soon)
+              <button onClick={handleBuy} disabled={buying} className="btn-primary w-full">
+                {buying ? <Spinner /> : <CreditCard className="h-4 w-4" />}
+                Buy for {priceLabel(course.price)}
               </button>
             ) : (
               <button onClick={handleEnroll} disabled={enrollMut.isPending} className="btn-primary w-full">

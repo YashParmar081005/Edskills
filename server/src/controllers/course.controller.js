@@ -7,6 +7,7 @@ import { Progress } from '../models/Progress.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ensureCourseOwner } from '../utils/courseAccess.js';
+import { removeCourseIndex } from '../services/rag.service.js';
 
 /** Attach lesson counts (moduleCount/lessonCount) to a list of course docs. */
 async function withCounts(courses) {
@@ -247,6 +248,7 @@ export const deleteCourse = asyncHandler(async (req, res) => {
   await Promise.all([
     Lesson.deleteMany({ course: course._id }),
     Module.deleteMany({ course: course._id }),
+    removeCourseIndex(course._id).catch(() => {}),
   ]);
   await course.deleteOne();
 

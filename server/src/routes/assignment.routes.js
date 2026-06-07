@@ -6,10 +6,14 @@ import {
   submitAssignment,
   getMySubmission,
   listSubmissions,
+  getMyAssignments,
 } from '../controllers/assignment.controller.js';
 import { protect, authorize } from '../middleware/auth.js';
 
 const router = Router();
+
+// Instructor hub — literal path BEFORE "/:id"
+router.get('/mine', protect, authorize('instructor', 'admin'), getMyAssignments);
 
 // Role-aware / student
 router.get('/:id', protect, getAssignment);

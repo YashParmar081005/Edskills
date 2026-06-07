@@ -5,6 +5,7 @@ import { Enrollment } from '../models/Enrollment.js';
 import { Progress } from '../models/Progress.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
+import { ensureEnrollment } from '../services/enrollment.service.js';
 
 /**
  * POST /api/courses/:id/enroll   (protect)
@@ -23,16 +24,10 @@ export const enroll = asyncHandler(async (req, res) => {
     throw new ApiError(402, 'This is a paid course. Checkout arrives in Phase 8.');
   }
 
-  const existing = await Enrollment.findOne({ student: req.user._id, course: course._id });
-  if (existing) {
-    return res.json({ success: true, alreadyEnrolled: true, enrollment: existing });
+  const { enrollment, created } = await ensureEnrollment(req.user._id, course._id);
+  if (!created) {
+    return res.json({ success: true, alreadyEnrolled: true, enrollment });
   }
-
-  const enrollment = await Enrollment.create({
-    student: req.user._id,
-    course: course._id,
-  });
-  await Course.updateOne({ _id: course._id }, { $inc: { totalEnrollments: 1 } });
 
   res.status(201).json({ success: true, enrollment });
 });

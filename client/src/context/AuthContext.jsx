@@ -74,6 +74,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  /** Merge updated fields into the cached user (after a profile edit). */
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
+  /** Replace the in-memory access token (after a password change rotation). */
+  const setToken = useCallback((token) => setAccessToken(token), []);
+
   const value = {
     user,
     loading,
@@ -81,6 +89,8 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    updateUser,
+    setToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

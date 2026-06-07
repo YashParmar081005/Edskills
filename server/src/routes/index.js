@@ -14,6 +14,10 @@ import submissionRoutes from './submission.routes.js';
 import threadRoutes from './thread.routes.js';
 import replyRoutes from './reply.routes.js';
 import notificationRoutes from './notification.routes.js';
+import paymentRoutes from './payment.routes.js';
+import certificateRoutes from './certificate.routes.js';
+import analyticsRoutes from './analytics.routes.js';
+import userRoutes from './user.routes.js';
 
 /**
  * Root API router. Mount every feature router here so app.js stays clean.
@@ -36,5 +40,9 @@ router.use('/submissions', submissionRoutes);
 router.use('/threads', threadRoutes);
 router.use('/replies', replyRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/certificates', certificateRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/users', userRoutes);
 
 export default router;

@@ -133,3 +133,53 @@ export const logout = asyncHandler(async (req, res) => {
 export const me = asyncHandler(async (req, res) => {
   res.json({ success: true, user: req.user.toSafeJSON() });
 });
+
+/**
+ * PATCH /api/auth/me  (protected)
+ * Update the signed-in user's own profile: name, avatar, email.
+ * Role is intentionally NOT editable here (admin-only via /api/users).
+ */
+export const updateMe = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) throw new ApiError(404, 'Account not found.');
+
+  const { name, avatar, email } = req.body;
+
+  if (typeof name === 'string') user.name = name.trim();
+  if (typeof avatar === 'string') user.avatar = avatar.trim();
+
+  if (typeof email === 'string' && email.toLowerCase() !== user.email) {
+    const normalized = email.toLowerCase().trim();
+    const taken = await User.findOne({ email: normalized, _id: { $ne: user._id } });
+    if (taken) throw new ApiError(409, 'That email is already in use.');
+    user.email = normalized;
+  }
+
+  await user.save();
+  res.json({ success: true, user: user.toSafeJSON() });
+});
+
+/**
+ * POST /api/auth/me/password  (protected)
+ * Change the signed-in user's password after verifying the current one.
+ * Rotates the refresh token so other sessions are invalidated.
+ */
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user._id).select('+passwordHash');
+  if (!user) throw new ApiError(404, 'Account not found.');
+
+  const ok = await user.comparePassword(currentPassword);
+  if (!ok) throw new ApiError(401, 'Current password is incorrect.');
+
+  await user.setPassword(newPassword);
+  const accessToken = await issueTokens(user, res); // rotates refresh cookie
+
+  res.json({
+    success: true,
+    accessToken,
+    user: user.toSafeJSON(),
+    message: 'Password updated.',
+  });
+});

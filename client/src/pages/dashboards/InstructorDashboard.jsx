@@ -9,12 +9,12 @@ const accent = {
 };
 
 const cards = [
-  { Icon: BookPlus, label: 'My Courses', desc: 'Create & manage your courses.', to: '/instructor/courses' },
-  { Icon: Layers, label: 'Course Builder', desc: 'Add modules, lessons & videos.', to: '/instructor/courses' },
-  { Icon: FileQuestion, label: 'AI Quiz Generator', desc: 'Generate quizzes from lesson content.', soon: true },
-  { Icon: ClipboardList, label: 'Assignments', desc: 'Create & AI-grade submissions.', soon: true },
-  { Icon: MessagesSquare, label: 'Discussions', desc: 'Answer questions in course forums.', soon: true },
-  { Icon: LineChart, label: 'Analytics', desc: 'Track engagement & quiz scores.', soon: true },
+  { Icon: BookPlus, label: 'My Courses', desc: 'Create, edit & publish courses.', to: '/instructor/courses' },
+  { Icon: Layers, label: 'Course Builder', desc: 'Pick a course to add modules & lessons.', to: '/instructor/courses' },
+  { Icon: FileQuestion, label: 'AI Quiz Generator', desc: 'All your quizzes across courses.', to: '/instructor/quizzes' },
+  { Icon: ClipboardList, label: 'Assignments', desc: 'Create & AI-grade submissions.', to: '/instructor/assignments' },
+  { Icon: MessagesSquare, label: 'Discussions', desc: 'Answer student questions.', to: '/instructor/discussions' },
+  { Icon: LineChart, label: 'Analytics', desc: 'Track engagement & quiz scores.', to: '/instructor/analytics' },
 ];
 
 export default function InstructorDashboard() {
@@ -23,7 +23,7 @@ export default function InstructorDashboard() {
       accent={accent}
       badge="Instructor workspace"
       title="Hello"
-      blurb="Create and manage your courses. The full course builder and AI teaching tools arrive in the next phases."
+      blurb="Create courses, generate AI quizzes, AI-grade assignments, answer discussions, and track analytics."
       cards={cards}
     />
   );

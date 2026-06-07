@@ -28,6 +28,46 @@ async function assertEnrolledOrOwner(course, user) {
   return false;
 }
 
+/* ------------------------------- instructor hub ----------------------------- */
+
+/**
+ * GET /api/assignments/mine   (instructor/admin)
+ * All assignments across the instructor's courses + submission counts.
+ */
+export const getMyAssignments = asyncHandler(async (req, res) => {
+  const courseFilter = req.user.role === 'admin' ? {} : { instructor: req.user._id };
+  const courses = await Course.find(courseFilter).select('title').sort({ title: 1 }).lean();
+  const courseIds = courses.map((c) => c._id);
+
+  const assignments = await Assignment.find({ course: { $in: courseIds } })
+    .sort({ createdAt: -1 })
+    .populate('course', 'title')
+    .lean();
+
+  const ids = assignments.map((a) => a._id);
+  const counts = await Submission.aggregate([
+    { $match: { assignment: { $in: ids } } },
+    {
+      $group: {
+        _id: '$assignment',
+        total: { $sum: 1 },
+        graded: { $sum: { $cond: [{ $eq: ['$status', 'graded'] }, 1, 0] } },
+      },
+    },
+  ]);
+  const map = Object.fromEntries(counts.map((c) => [String(c._id), c]));
+
+  res.json({
+    success: true,
+    courses, // for the "new assignment" course picker
+    assignments: assignments.map((a) => ({
+      ...a,
+      submissionCount: map[String(a._id)]?.total || 0,
+      gradedCount: map[String(a._id)]?.graded || 0,
+    })),
+  });
+});
+
 /* ------------------------------- instructor CRUD ---------------------------- */
 
 /** POST /api/courses/:id/assignments */

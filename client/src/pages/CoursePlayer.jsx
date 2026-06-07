@@ -18,6 +18,7 @@ import {
 import { useCourseLearn, learnKeys } from '../features/learn/hooks.js';
 import { saveProgress } from '../api/learn.js';
 import QuizTaker from '../features/quiz/QuizTaker.jsx';
+import CertificateButton from '../features/certificates/CertificateButton.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
 import Spinner from '../components/Spinner.jsx';
 
@@ -188,6 +189,14 @@ export default function CoursePlayer() {
           </div>
         </div>
         <ProgressBar percent={percent} className="mt-2" />
+        {percent === 100 && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-green-500/10 p-3">
+            <p className="text-sm font-medium text-green-700 dark:text-green-300">
+              🎉 Course complete! Your certificate is ready.
+            </p>
+            <CertificateButton courseId={courseId} className="!py-1.5 text-xs" />
+          </div>
+        )}
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">

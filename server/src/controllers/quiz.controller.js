@@ -249,6 +249,70 @@ export const attemptQuiz = asyncHandler(async (req, res) => {
 });
 
 /**
+ * GET /api/quizzes/mine   (protect)
+ * Every quiz across the student's enrolled courses + their latest score.
+ */
+export const getMyQuizzes = asyncHandler(async (req, res) => {
+  const enrollments = await Enrollment.find({ student: req.user._id }).select('course').lean();
+  const courseIds = enrollments.map((e) => e.course);
+
+  const quizzes = await Quiz.find({ course: { $in: courseIds } })
+    .populate('lesson', 'title')
+    .populate('course', 'title')
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  const quizIds = quizzes.map((q) => q._id);
+  const attempts = await QuizAttempt.aggregate([
+    { $match: { student: req.user._id, quiz: { $in: quizIds } } },
+    { $sort: { createdAt: -1 } },
+    { $group: { _id: '$quiz', percentage: { $first: '$percentage' } } },
+  ]);
+  const attMap = Object.fromEntries(attempts.map((a) => [String(a._id), a.percentage]));
+
+  res.json({
+    success: true,
+    quizzes: quizzes.map((q) => ({
+      _id: q._id,
+      title: q.title,
+      questionCount: q.questions.length,
+      aiGenerated: q.aiGenerated,
+      course: q.course,
+      lesson: q.lesson,
+      lastScore: attMap[String(q._id)] ?? null,
+    })),
+  });
+});
+
+/**
+ * GET /api/quizzes/instructor   (instructor/admin)
+ * All quizzes across the instructor's courses.
+ */
+export const getInstructorQuizzes = asyncHandler(async (req, res) => {
+  const courseFilter = req.user.role === 'admin' ? {} : { instructor: req.user._id };
+  const courses = await Course.find(courseFilter).select('_id').lean();
+  const courseIds = courses.map((c) => c._id);
+
+  const quizzes = await Quiz.find({ course: { $in: courseIds } })
+    .populate('lesson', 'title')
+    .populate('course', 'title')
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  res.json({
+    success: true,
+    quizzes: quizzes.map((q) => ({
+      _id: q._id,
+      title: q.title,
+      questionCount: q.questions.length,
+      aiGenerated: q.aiGenerated,
+      course: q.course,
+      lesson: q.lesson,
+    })),
+  });
+});
+
+/**
  * GET /api/quizzes/:id/my-attempt   (protect)
  * The student's most recent attempt (or null).
  */

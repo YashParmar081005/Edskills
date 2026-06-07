@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   uploadVideoFile,
   uploadThumbnailFile,
+  uploadAvatarFile,
   uploadGenericFile,
 } from '../controllers/upload.controller.js';
 import { protect, authorize } from '../middleware/auth.js';
@@ -24,6 +25,9 @@ router.post(
   runUpload(uploadImage),
   uploadThumbnailFile
 );
+
+// Profile avatar — any authenticated user
+router.post('/avatar', protect, runUpload(uploadImage), uploadAvatarFile);
 
 // Generic file (assignment submissions) — any authenticated user
 router.post('/file', protect, runUpload(uploadAny), uploadGenericFile);

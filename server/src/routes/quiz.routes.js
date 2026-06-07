@@ -5,10 +5,17 @@ import {
   deleteQuiz,
   attemptQuiz,
   getMyAttempt,
+  getMyQuizzes,
+  getInstructorQuizzes,
 } from '../controllers/quiz.controller.js';
 import { protect, authorize } from '../middleware/auth.js';
 
 const router = Router();
+
+// Student: all my quizzes (literal path before "/:id" params)
+router.get('/mine', protect, getMyQuizzes);
+// Instructor: all quizzes across owned courses
+router.get('/instructor', protect, authorize('instructor', 'admin'), getInstructorQuizzes);
 
 // Instructor/admin
 router.post('/', protect, authorize('instructor', 'admin'), saveQuiz);

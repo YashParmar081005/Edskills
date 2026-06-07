@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { GraduationCap, Compass } from 'lucide-react';
 import { useMyEnrollments } from '../features/learn/hooks.js';
 import PublicCourseCard from '../features/learn/PublicCourseCard.jsx';
+import CertificateButton from '../features/certificates/CertificateButton.jsx';
 import Spinner from '../components/Spinner.jsx';
 
 export default function MyCourses() {
@@ -55,12 +56,16 @@ export default function MyCourses() {
       {enrollments?.length > 0 && (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {enrollments.map((e) => (
-            <PublicCourseCard
-              key={e._id}
-              course={e.course}
-              progressPercent={e.progressPercent}
-              to={`/learn/${e.course._id}`}
-            />
+            <div key={e._id} className="flex flex-col gap-2">
+              <PublicCourseCard
+                course={e.course}
+                progressPercent={e.progressPercent}
+                to={`/learn/${e.course._id}`}
+              />
+              {e.progressPercent === 100 && (
+                <CertificateButton courseId={e.course._id} className="w-full !py-2 text-xs" />
+              )}
+            </div>
           ))}
         </div>
       )}

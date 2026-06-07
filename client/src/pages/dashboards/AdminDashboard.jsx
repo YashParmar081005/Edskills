@@ -9,12 +9,12 @@ const accent = {
 };
 
 const cards = [
-  { Icon: Users, label: 'User Management', desc: 'Manage admins, instructors & students.', soon: true },
+  { Icon: Users, label: 'User Management', desc: 'Manage admins, instructors & students.', to: '/admin/users' },
   { Icon: BookOpen, label: 'All Courses', desc: 'Oversee every course on the platform.', to: '/instructor/courses' },
-  { Icon: BarChart3, label: 'Platform Analytics', desc: 'Enrollments, revenue & completion rates.', soon: true },
-  { Icon: CreditCard, label: 'Payments', desc: 'Track Stripe transactions & payouts.', soon: true },
-  { Icon: Bell, label: 'Notifications', desc: 'Broadcast announcements to users.', soon: true },
-  { Icon: ShieldCheck, label: 'Roles & Access', desc: 'Configure role-based permissions.', soon: true },
+  { Icon: BarChart3, label: 'Platform Analytics', desc: 'Enrollments, revenue & completion rates.', to: '/admin/analytics' },
+  { Icon: CreditCard, label: 'Payments', desc: 'Track Stripe transactions & revenue.', to: '/admin/payments' },
+  { Icon: Bell, label: 'Announcements', desc: 'Broadcast notifications & reminders.', to: '/admin/announcements' },
+  { Icon: ShieldCheck, label: 'Roles & Access', desc: 'Permissions matrix & role changes.', to: '/admin/roles' },
 ];
 
 export default function AdminDashboard() {
@@ -23,7 +23,7 @@ export default function AdminDashboard() {
       accent={accent}
       badge="Admin workspace"
       title="Welcome"
-      blurb="You have full control over the platform. Course, payment, and analytics tools light up in the coming phases."
+      blurb="You have full control over the platform — manage users, oversee courses, track payments, and view analytics."
       cards={cards}
     />
   );

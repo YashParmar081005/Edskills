@@ -12,9 +12,12 @@ function toLocalInput(iso) {
   return new Date(d - tzOffset).toISOString().slice(0, 16);
 }
 
-export default function AssignmentFormModal({ open, onClose, onSubmit, initial, saving }) {
+export default function AssignmentFormModal({ open, onClose, onSubmit, initial, saving, courses }) {
   const isEdit = !!initial;
+  // Show a course picker only when creating from the cross-course hub.
+  const showCoursePicker = !isEdit && Array.isArray(courses) && courses.length > 0;
   const [form, setForm] = useState({
+    courseId: courses?.[0]?._id || '',
     title: initial?.title || '',
     description: initial?.description || '',
     dueDate: toLocalInput(initial?.dueDate),
@@ -26,7 +29,9 @@ export default function AssignmentFormModal({ open, onClose, onSubmit, initial, 
   const submit = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return toast.error('Title is required.');
+    if (showCoursePicker && !form.courseId) return toast.error('Pick a course.');
     onSubmit({
+      courseId: form.courseId,
       title: form.title.trim(),
       description: form.description.trim(),
       dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : null,
@@ -42,6 +47,21 @@ export default function AssignmentFormModal({ open, onClose, onSubmit, initial, 
       maxWidth="max-w-xl"
     >
       <form onSubmit={submit} className="space-y-4" noValidate>
+        {showCoursePicker && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+              Course
+            </label>
+            <select name="courseId" value={form.courseId} onChange={onChange} className="glass-input">
+              {courses.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
             Title

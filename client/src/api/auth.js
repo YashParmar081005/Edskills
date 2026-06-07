@@ -29,3 +29,25 @@ export async function meRequest() {
   const { data } = await api.get('/auth/me');
   return data;
 }
+
+/** PATCH /auth/me → { user } — update name/email/avatar */
+export async function updateProfileRequest(payload) {
+  const { data } = await api.patch('/auth/me', payload);
+  return data;
+}
+
+/** POST /auth/me/password → { accessToken, user } */
+export async function changePasswordRequest(payload) {
+  const { data } = await api.post('/auth/me/password', payload);
+  return data;
+}
+
+/** POST /upload/avatar (multipart "image") → { url } */
+export async function uploadAvatarRequest(file) {
+  const form = new FormData();
+  form.append('image', file);
+  const { data } = await api.post('/upload/avatar', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data; // { url, publicId }
+}

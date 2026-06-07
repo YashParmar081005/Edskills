@@ -38,3 +38,30 @@ export const loginValidator = [
     .normalizeEmail(),
   body('password').notEmpty().withMessage('Password is required'),
 ];
+
+export const updateMeValidator = [
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 80 })
+    .withMessage('Name must be 2-80 characters'),
+  body('email')
+    .optional()
+    .trim()
+    .isEmail()
+    .withMessage('Enter a valid email')
+    .normalizeEmail(),
+  body('avatar')
+    .optional({ nullable: true })
+    .isString()
+    .withMessage('Avatar must be a URL string'),
+];
+
+export const changePasswordValidator = [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword')
+    .notEmpty()
+    .withMessage('New password is required')
+    .isLength({ min: 6 })
+    .withMessage('New password must be at least 6 characters'),
+];

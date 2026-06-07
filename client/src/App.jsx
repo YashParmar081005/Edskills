@@ -8,6 +8,9 @@ import InstructorDashboard from './pages/dashboards/InstructorDashboard.jsx';
 import StudentDashboard from './pages/dashboards/StudentDashboard.jsx';
 import CourseList from './pages/instructor/CourseList.jsx';
 import CourseBuilder from './pages/instructor/CourseBuilder.jsx';
+import InstructorAssignmentsHub from './pages/InstructorAssignmentsHub.jsx';
+import InstructorDiscussions from './pages/InstructorDiscussions.jsx';
+import InstructorQuizzesHub from './pages/InstructorQuizzesHub.jsx';
 import BrowseCourses from './pages/BrowseCourses.jsx';
 import CourseDetail from './pages/CourseDetail.jsx';
 import MyCourses from './pages/MyCourses.jsx';
@@ -16,6 +19,18 @@ import AssignmentsPage from './pages/AssignmentsPage.jsx';
 import SubmissionsGrading from './pages/SubmissionsGrading.jsx';
 import CourseForum from './pages/CourseForum.jsx';
 import ThreadDetail from './pages/ThreadDetail.jsx';
+import PaymentSuccess from './pages/PaymentSuccess.jsx';
+import CertificateVerify from './pages/CertificateVerify.jsx';
+import InstructorAnalytics from './pages/InstructorAnalytics.jsx';
+import AdminAnalytics from './pages/AdminAnalytics.jsx';
+import AdminAnnouncements from './pages/AdminAnnouncements.jsx';
+import AdminPayments from './pages/AdminPayments.jsx';
+import AdminUsers from './pages/AdminUsers.jsx';
+import AdminRoles from './pages/AdminRoles.jsx';
+import MyCertificates from './pages/MyCertificates.jsx';
+import MyQuizzes from './pages/MyQuizzes.jsx';
+import DiscussHub from './pages/DiscussHub.jsx';
+import Profile from './pages/Profile.jsx';
 
 import GuestRoute from './routes/GuestRoute.jsx';
 import RoleRoute from './routes/RoleRoute.jsx';
@@ -33,6 +48,9 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Home />} />
 
+      {/* Public certificate verification */}
+      <Route path="/verify/:certificateId" element={<CertificateVerify />} />
+
       <Route element={<GuestRoute />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -41,6 +59,7 @@ export default function App() {
       <Route element={<DashboardLayout />}>
         {/* Shared authenticated pages (any logged-in user) */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<Profile />} />
           <Route path="/courses" element={<BrowseCourses />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
           <Route path="/learn/:courseId" element={<CoursePlayer />} />
@@ -49,15 +68,28 @@ export default function App() {
           <Route path="/courses/:courseId/assignments" element={<AssignmentsPage />} />
           <Route path="/courses/:courseId/forum" element={<CourseForum />} />
           <Route path="/threads/:threadId" element={<ThreadDetail />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/student/certificates" element={<MyCertificates />} />
+          <Route path="/student/quizzes" element={<MyQuizzes />} />
+          <Route path="/student/discuss" element={<DiscussHub />} />
         </Route>
 
         <Route element={<RoleRoute roles={['admin']} />}>
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+          <Route path="/admin/payments" element={<AdminPayments />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/roles" element={<AdminRoles />} />
         </Route>
         <Route element={<RoleRoute roles={['instructor', 'admin']} />}>
           <Route path="/instructor" element={<InstructorDashboard />} />
           <Route path="/instructor/courses" element={<CourseList />} />
           <Route path="/instructor/courses/:id" element={<CourseBuilder />} />
+          <Route path="/instructor/quizzes" element={<InstructorQuizzesHub />} />
+          <Route path="/instructor/assignments" element={<InstructorAssignmentsHub />} />
+          <Route path="/instructor/discussions" element={<InstructorDiscussions />} />
+          <Route path="/instructor/analytics" element={<InstructorAnalytics />} />
           <Route
             path="/instructor/assignments/:assignmentId/submissions"
             element={<SubmissionsGrading />}

@@ -65,6 +65,16 @@
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
   }
 
+  /* Solid panel for pop-ups / modals / dropdowns — opaque so nothing behind
+     bleeds through. Keeps rounded corners + a strong floating shadow. */
+  .solid-card {
+    @apply rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900;
+    box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.45);
+  }
+  html.dark .solid-card {
+    box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+  }
+
   /* Subtle glass for nested panels */
   .glass-soft {
     @apply rounded-xl border border-white/30 bg-white/40 backdrop-blur-md

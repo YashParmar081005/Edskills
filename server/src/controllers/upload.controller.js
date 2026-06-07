@@ -48,6 +48,22 @@ export const uploadThumbnailFile = asyncHandler(async (req, res) => {
 });
 
 /**
+ * POST /api/upload/avatar   (multipart field: "image")
+ * Profile picture — any authenticated user.
+ */
+export const uploadAvatarFile = asyncHandler(async (req, res) => {
+  assertConfigured();
+  if (!req.file) throw new ApiError(400, 'No image file provided.');
+
+  const result = await uploadBuffer(req.file.buffer, {
+    folder: 'ai-lms/avatars',
+    resourceType: 'image',
+  });
+
+  res.status(201).json({ success: true, url: result.url, publicId: result.publicId });
+});
+
+/**
  * POST /api/upload/file   (multipart field: "file") — any type
  * Used for assignment submissions. Accessible to any authenticated user.
  */

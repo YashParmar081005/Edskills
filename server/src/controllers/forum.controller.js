@@ -32,6 +32,48 @@ const shapeUpvotes = (doc, userId) => ({
 
 /* --------------------------------- threads ---------------------------------- */
 
+/**
+ * GET /api/threads/mine   (instructor/admin)
+ * All threads across the instructor's courses — an "answer inbox".
+ */
+export const getMyThreads = asyncHandler(async (req, res) => {
+  const courseFilter = req.user.role === 'admin' ? {} : { instructor: req.user._id };
+  const courses = await Course.find(courseFilter).select('_id').lean();
+  const courseIds = courses.map((c) => c._id);
+
+  const threads = await ForumThread.find({ course: { $in: courseIds } })
+    .sort({ updatedAt: -1 })
+    .populate('author', 'name avatar role')
+    .populate('course', 'title')
+    .lean();
+
+  const ids = threads.map((t) => t._id);
+  const stats = await ForumReply.aggregate([
+    { $match: { thread: { $in: ids } } },
+    {
+      $group: {
+        _id: '$thread',
+        replies: { $sum: 1 },
+        answered: { $max: { $cond: ['$isAnswer', 1, 0] } },
+      },
+    },
+  ]);
+  const map = Object.fromEntries(stats.map((s) => [String(s._id), s]));
+
+  res.json({
+    success: true,
+    threads: threads.map((t) => ({
+      _id: t._id,
+      title: t.title,
+      course: t.course,
+      author: t.author,
+      createdAt: t.createdAt,
+      replyCount: map[String(t._id)]?.replies || 0,
+      answered: !!map[String(t._id)]?.answered,
+    })),
+  });
+});
+
 /** GET /api/courses/:id/threads */
 export const listThreads = asyncHandler(async (req, res) => {
   const { course } = await getAccessibleCourse(req.params.id, req.user);

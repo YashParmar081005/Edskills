@@ -67,6 +67,80 @@ ${String(content).slice(0, 8000)}
   }));
 }
 
+/* ------------------------------- RAG Q&A ------------------------------------ */
+
+const ASK_SYSTEM =
+  'You are a helpful course teaching assistant. Answer the student STRICTLY using ' +
+  'the provided context excerpts from the course. If the answer is not in the ' +
+  'context, say you do not have enough information in the course material. ' +
+  'You ALWAYS respond with strict JSON only.';
+
+/**
+ * Answer a course question grounded in retrieved chunks.
+ * @returns {Promise<{answer:string, sources:number[]}>}
+ */
+export async function answerCourseQuestion({ question, chunks }) {
+  const context = chunks
+    .map((c, i) => `[${i + 1}] (from lesson "${c.lessonTitle}")\n${c.chunkText}`)
+    .join('\n\n');
+
+  const user = `CONTEXT EXCERPTS:\n${context}\n\nSTUDENT QUESTION: ${question}\n\nRespond with JSON: {"answer":"<your answer, grounded in the context>","sources":[<the excerpt numbers you used, e.g. 1,3>]}`;
+
+  const data = await chatJSON({
+    system: ASK_SYSTEM,
+    user,
+    validate: (o) => o && typeof o.answer === 'string',
+    temperature: 0.3,
+  });
+
+  return {
+    answer: data.answer.trim(),
+    sources: Array.isArray(data.sources) ? data.sources.map(Number).filter(Boolean) : [],
+  };
+}
+
+/* ---------------------------- Universal assistant --------------------------- */
+
+const ASSISTANT_SYSTEM = (role) =>
+  `You are the friendly AI assistant for "AI LMS", an AI-powered learning platform. ` +
+  `The current user's role is ${role}. Help them use the platform — browsing & enrolling in ` +
+  `courses, the lesson player and progress tracking, AI-generated quizzes, assignments, course ` +
+  `discussion forums, certificates, and (for instructors/admins) the course builder & analytics. ` +
+  `Also answer general study/tutoring questions. Be concise, friendly and practical. ` +
+  `You ALWAYS respond with strict JSON.`;
+
+/**
+ * Conversational assistant. If `courseContext` (numbered excerpts) is provided,
+ * the model may ground course-specific answers in it and cite excerpt numbers.
+ * @returns {Promise<{reply:string, sources:number[]}>}
+ */
+export async function assistantChat({ role, messages, courseContext = '' }) {
+  const history = messages
+    .slice(-6)
+    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+    .join('\n');
+
+  const user =
+    (courseContext ? `RELEVANT COURSE MATERIAL:\n${courseContext}\n\n` : '') +
+    `CONVERSATION:\n${history}\n\n` +
+    (courseContext
+      ? 'If the user asks about this course\'s content, answer using the material above and put the excerpt numbers you used in "sources". '
+      : '') +
+    'Respond with JSON: {"reply":"<your helpful answer>","sources":[<excerpt numbers used, or empty>]}';
+
+  const data = await chatJSON({
+    system: ASSISTANT_SYSTEM(role),
+    user,
+    validate: (o) => o && typeof o.reply === 'string',
+    temperature: 0.5,
+  });
+
+  return {
+    reply: data.reply.trim(),
+    sources: Array.isArray(data.sources) ? data.sources.map(Number).filter(Boolean) : [],
+  };
+}
+
 /* -------------------------------- Auto-grading ------------------------------ */
 
 const GRADE_SYSTEM =

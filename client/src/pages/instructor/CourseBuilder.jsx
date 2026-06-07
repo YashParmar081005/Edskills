@@ -10,6 +10,7 @@ import {
   Layers,
   ClipboardList,
   MessagesSquare,
+  Info,
 } from 'lucide-react';
 import {
   useCourse,
@@ -39,6 +40,8 @@ export default function CourseBuilder() {
   const [newModuleTitle, setNewModuleTitle] = useState('');
 
   const modules = course?.modules || [];
+  const totalLessons = modules.reduce((n, m) => n + (m.lessons?.length || 0), 0);
+  const canPublish = course?.isPublished || totalLessons > 0;
 
   const addModule = (e) => {
     e.preventDefault();
@@ -141,12 +144,9 @@ export default function CourseBuilder() {
             </button>
             <button
               onClick={() => publishMut.mutate(!course.isPublished)}
-              disabled={publishMut.isPending}
-              className={
-                course.isPublished
-                  ? 'btn-ghost'
-                  : 'btn-primary'
-              }
+              disabled={publishMut.isPending || !canPublish}
+              title={!canPublish ? 'Add at least one lesson before publishing' : undefined}
+              className={course.isPublished ? 'btn-ghost' : 'btn-primary'}
             >
               {publishMut.isPending ? (
                 <Spinner />
@@ -160,6 +160,22 @@ export default function CourseBuilder() {
           </div>
         </div>
       </div>
+
+      {/* Draft hint */}
+      {!course.isPublished && totalLessons === 0 && (
+        <div className="glass-card flex items-start gap-3 border-l-4 border-amber-400 p-4">
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+          <div className="text-sm">
+            <p className="font-semibold text-slate-800 dark:text-slate-100">
+              This course is a draft — students can't see it yet.
+            </p>
+            <p className="text-slate-500 dark:text-slate-400">
+              Add a module and at least one lesson below, then click <b>Publish</b>. Only
+              published courses appear in Browse.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Curriculum */}
       <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">

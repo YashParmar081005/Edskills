@@ -1,7 +1,9 @@
+import cron from 'node-cron';
 import { createApp } from './app.js';
 import { env, checkEnv } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
 import { initSocket } from './sockets/index.js';
+import { checkAndSendReminders } from './services/email.service.js';
 
 async function start() {
   checkEnv();
@@ -23,6 +25,13 @@ async function start() {
 
   // Real-time layer (Phase 7): forum live updates + notifications.
   initSocket(server);
+
+  // Daily assignment due-date reminder emails (Phase 9). 9:00 AM server time.
+  cron.schedule('0 9 * * *', () => {
+    checkAndSendReminders()
+      .then((n) => n && console.log(`📧 Sent ${n} assignment reminder(s).`))
+      .catch((e) => console.error('Reminder job failed:', e.message));
+  });
 
   // Graceful shutdown
   const shutdown = async (signal) => {
