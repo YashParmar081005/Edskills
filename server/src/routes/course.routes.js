@@ -6,9 +6,13 @@ import {
   updateCourse,
   deleteCourse,
   togglePublish,
+  listPublicCourses,
+  getCourseLearn,
 } from '../controllers/course.controller.js';
 import { addModule, reorderModules } from '../controllers/module.controller.js';
-import { protect, authorize } from '../middleware/auth.js';
+import { enroll } from '../controllers/enrollment.controller.js';
+import { getCourseProgress } from '../controllers/progress.controller.js';
+import { protect, authorize, optionalAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
   createCourseValidator,
@@ -17,20 +21,29 @@ import {
 } from '../validators/course.validators.js';
 
 const router = Router();
+const instructor = [protect, authorize('instructor', 'admin')];
 
-// Every course-management route is instructor/admin only.
-router.use(protect, authorize('instructor', 'admin'));
+/* ---------------------------------- Public ---------------------------------- */
+router.get('/', listPublicCourses); // browse published courses
 
-router.get('/mine', getMyCourses);
-router.post('/', createCourseValidator, validate, createCourse);
+/* ----------------------------- Instructor (mine) ---------------------------- */
+// Literal "/mine" MUST be declared before the "/:id" param route.
+router.get('/mine', ...instructor, getMyCourses);
+router.post('/', ...instructor, createCourseValidator, validate, createCourse);
 
-router.get('/:id', getCourse);
-router.put('/:id', updateCourseValidator, validate, updateCourse);
-router.delete('/:id', deleteCourse);
-router.post('/:id/publish', togglePublish);
+/* --------------------------- Student: enroll / learn ------------------------ */
+router.post('/:id/enroll', protect, enroll);
+router.get('/:id/learn', protect, getCourseLearn);
+router.get('/:id/progress', protect, getCourseProgress);
 
-// Modules nested under a course
-router.post('/:id/modules', moduleValidator, validate, addModule);
-router.put('/:id/modules/reorder', reorderModules);
+/* --------------------------- Public-or-owner detail ------------------------- */
+router.get('/:id', optionalAuth, getCourse);
+
+/* ------------------------- Instructor management on :id --------------------- */
+router.put('/:id', ...instructor, updateCourseValidator, validate, updateCourse);
+router.delete('/:id', ...instructor, deleteCourse);
+router.post('/:id/publish', ...instructor, togglePublish);
+router.post('/:id/modules', ...instructor, moduleValidator, validate, addModule);
+router.put('/:id/modules/reorder', ...instructor, reorderModules);
 
 export default router;

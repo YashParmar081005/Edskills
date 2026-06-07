@@ -5,10 +5,11 @@ A full-stack **AI-powered Learning Management System** built with the MERN stack
 phase by phase, following [`AI_LMS_BUILD_PLAN.md`](./AI_LMS_BUILD_PLAN.md) and
 [`AI_LMS_10_PROMPTS.md`](./AI_LMS_10_PROMPTS.md).
 
-> **Current status: Phase 3 — Course Creation (Instructor) ✅**
-> Instructors build courses with modules & lessons (video upload via Cloudinary
-> or text), reorder them, set price/category, and publish. Plus Phase 2 JWT auth
-> + roles and the glassy blue/sky-blue light/dark UI.
+> **Current status: Phase 4 — Enrollment, Student Dashboard & Progress ✅**
+> Students browse/search published courses, enroll, learn in a video/text player
+> with auto-resume + completion tracking, and watch progress bars fill across
+> their courses. Builds on Phases 1–3 (auth/roles, course creation) with the
+> same glassy blue/sky-blue light/dark UI.
 
 ---
 
@@ -194,6 +195,24 @@ API: `GET/POST /api/courses`, `GET /api/courses/mine`, `GET/PUT/DELETE /api/cour
 
 ---
 
+## Student Learning Flow (Phase 4)
+
+- **Browse** (`/courses`) — search, category filter, and sort across published
+  courses (only published courses are public).
+- **Course detail** (`/courses/:id`) — overview + curriculum outline (lesson
+  content is locked until enrolled) with a free **Enroll** button.
+- **My Learning** (`/student/my-courses`) — enrolled courses with progress bars.
+- **Lesson player** (`/learn/:courseId/:lessonId`) — video or text content, a
+  curriculum sidebar with completion ticks, **mark complete**, and **auto-resume**
+  (saved watched-seconds; videos auto-complete on finish). Course % updates live,
+  and an enrollment flips to `completed` at 100%.
+
+API: `GET /api/courses` (public browse), `POST /api/courses/:id/enroll`,
+`GET /api/courses/:id/learn` (enrolled-only full content + progress),
+`GET /api/enrollments/me`, `POST /api/progress`, `GET /api/courses/:id/progress`.
+
+---
+
 ## Environment Variables
 
 See [`server/.env.example`](./server/.env.example) for the full list.
@@ -216,12 +235,12 @@ See [`server/.env.example`](./server/.env.example) for the full list.
 
 ## Roadmap
 
-**Phases 1–3 of 10 complete.** Upcoming phases (see `AI_LMS_10_PROMPTS.md`):
+**Phases 1–4 of 10 complete.** Upcoming phases (see `AI_LMS_10_PROMPTS.md`):
 
 1. ~~Project Setup & Foundation~~ ✅
 2. ~~Authentication & Roles (admin / instructor / student)~~ ✅
 3. ~~Course Creation (Instructor)~~ ✅
-4. Enrollment, Student Dashboard, Content Player & Progress
+4. ~~Enrollment, Student Dashboard, Content Player & Progress~~ ✅
 5. AI Quiz Generation + Attempts + Auto-Grading
 6. Assignments & Submissions (AI-assisted grading)
 7. Discussion Forum + Real-Time Notifications

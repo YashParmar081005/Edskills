@@ -1,5 +1,17 @@
 import api from './axios.js';
 
+/* ------------------------------ Public / student ---------------------------- */
+
+export async function browseCourses(params = {}) {
+  const { data } = await api.get('/courses', { params });
+  return data.courses;
+}
+
+export async function getPublicCourse(id) {
+  const { data } = await api.get(`/courses/${id}`);
+  return data.course; // includes isOwner, isEnrolled, outline modules
+}
+
 /* ---------------------------------- Courses --------------------------------- */
 
 export async function getMyCourses() {

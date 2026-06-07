@@ -5,11 +5,12 @@ import courseRoutes from './course.routes.js';
 import moduleRoutes from './module.routes.js';
 import lessonRoutes from './lesson.routes.js';
 import uploadRoutes from './upload.routes.js';
+import enrollmentRoutes from './enrollment.routes.js';
+import progressRoutes from './progress.routes.js';
 
 /**
  * Root API router. Mount every feature router here so app.js stays clean.
- * Future phases add: /enrollments, /progress, /ai, /quizzes,
- * /assignments, /threads, /payments, etc.
+ * Future phases add: /ai, /quizzes, /assignments, /threads, /payments, etc.
  */
 const router = Router();
 
@@ -19,5 +20,7 @@ router.use('/courses', courseRoutes);
 router.use('/modules', moduleRoutes);
 router.use('/lessons', lessonRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/enrollments', enrollmentRoutes);
+router.use('/progress', progressRoutes);
 
 export default router;

@@ -2,22 +2,14 @@ import mongoose from 'mongoose';
 import { Course } from '../models/Course.js';
 import { Module } from '../models/Module.js';
 import { Lesson } from '../models/Lesson.js';
+import { Enrollment } from '../models/Enrollment.js';
+import { Progress } from '../models/Progress.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ensureCourseOwner } from '../utils/courseAccess.js';
 
-/**
- * GET /api/courses/mine
- * Courses owned by the logged-in instructor (admins see all).
- */
-export const getMyCourses = asyncHandler(async (req, res) => {
-  const filter = req.user.role === 'admin' ? {} : { instructor: req.user._id };
-  const courses = await Course.find(filter)
-    .sort({ updatedAt: -1 })
-    .populate('instructor', 'name email')
-    .lean();
-
-  // Attach lightweight counts so the list cards can show module/lesson totals.
+/** Attach lesson counts (moduleCount/lessonCount) to a list of course docs. */
+async function withCounts(courses) {
   const ids = courses.map((c) => c._id);
   const [moduleCounts, lessonCounts] = await Promise.all([
     Module.aggregate([
@@ -31,48 +23,183 @@ export const getMyCourses = asyncHandler(async (req, res) => {
   ]);
   const mMap = Object.fromEntries(moduleCounts.map((m) => [String(m._id), m.n]));
   const lMap = Object.fromEntries(lessonCounts.map((l) => [String(l._id), l.n]));
-
-  const data = courses.map((c) => ({
+  return courses.map((c) => ({
     ...c,
     moduleCount: mMap[String(c._id)] || 0,
     lessonCount: lMap[String(c._id)] || 0,
   }));
+}
 
-  res.json({ success: true, courses: data });
+/** Nest sorted lessons under their sorted modules. */
+function nestCurriculum(modules, lessons) {
+  const byModule = lessons.reduce((acc, l) => {
+    (acc[String(l.module)] = acc[String(l.module)] || []).push(l);
+    return acc;
+  }, {});
+  return modules.map((m) => ({ ...m, lessons: byModule[String(m._id)] || [] }));
+}
+
+/**
+ * GET /api/courses/mine
+ * Courses owned by the logged-in instructor (admins see all).
+ */
+export const getMyCourses = asyncHandler(async (req, res) => {
+  const filter = req.user.role === 'admin' ? {} : { instructor: req.user._id };
+  const courses = await Course.find(filter)
+    .sort({ updatedAt: -1 })
+    .populate('instructor', 'name email')
+    .lean();
+
+  res.json({ success: true, courses: await withCounts(courses) });
 });
 
 /**
- * GET /api/courses/:id
- * Full course with nested modules → lessons. Owner/admin only (Phase 3).
+ * GET /api/courses
+ * Public catalog of PUBLISHED courses with search/filter/sort.
+ * Query: q (search), category, sort (newest|popular|priceLow|priceHigh)
+ */
+export const listPublicCourses = asyncHandler(async (req, res) => {
+  const { q, category, sort } = req.query;
+  const filter = { isPublished: true };
+  if (category && category !== 'All') filter.category = category;
+  if (q) {
+    filter.$or = [
+      { title: { $regex: q, $options: 'i' } },
+      { description: { $regex: q, $options: 'i' } },
+      { tags: { $regex: q, $options: 'i' } },
+    ];
+  }
+
+  const sortMap = {
+    newest: { createdAt: -1 },
+    popular: { totalEnrollments: -1, createdAt: -1 },
+    priceLow: { price: 1 },
+    priceHigh: { price: -1 },
+  };
+
+  const courses = await Course.find(filter)
+    .sort(sortMap[sort] || sortMap.newest)
+    .populate('instructor', 'name')
+    .lean();
+
+  res.json({ success: true, courses: await withCounts(courses) });
+});
+
+/**
+ * GET /api/courses/:id   (optionalAuth)
+ * - Owner/admin: full course with lesson content (powers the builder).
+ * - Anyone else: PUBLISHED courses only, curriculum OUTLINE (no content/videoUrl).
+ *   Unpublished courses are hidden (404) from non-owners.
+ * Adds `isOwner` and `isEnrolled` flags.
  */
 export const getCourse = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     throw new ApiError(400, 'Invalid course id.');
   }
   const course = await Course.findById(req.params.id)
-    .populate('instructor', 'name email')
+    .populate('instructor', 'name email avatar')
     .lean();
   if (!course) throw new ApiError(404, 'Course not found.');
 
-  ensureCourseOwner(course, req.user);
+  const isOwner =
+    !!req.user &&
+    (String(course.instructor._id) === String(req.user._id) || req.user.role === 'admin');
+
+  if (!isOwner && !course.isPublished) {
+    throw new ApiError(404, 'Course not found.');
+  }
 
   const [modules, lessons] = await Promise.all([
     Module.find({ course: course._id }).sort({ order: 1, createdAt: 1 }).lean(),
     Lesson.find({ course: course._id }).sort({ order: 1, createdAt: 1 }).lean(),
   ]);
 
-  const lessonsByModule = lessons.reduce((acc, l) => {
-    const key = String(l.module);
-    (acc[key] = acc[key] || []).push(l);
-    return acc;
-  }, {});
+  // Non-owners get a preview outline (no content / video sources).
+  const visibleLessons = isOwner
+    ? lessons
+    : lessons.map((l) => ({
+        _id: l._id,
+        module: l.module,
+        course: l.course,
+        title: l.title,
+        type: l.type,
+        duration: l.duration,
+        order: l.order,
+      }));
 
-  const nestedModules = modules.map((m) => ({
-    ...m,
-    lessons: lessonsByModule[String(m._id)] || [],
-  }));
+  let isEnrolled = false;
+  if (req.user) {
+    isEnrolled = !!(await Enrollment.exists({
+      student: req.user._id,
+      course: course._id,
+    }));
+  }
 
-  res.json({ success: true, course: { ...course, modules: nestedModules } });
+  res.json({
+    success: true,
+    course: {
+      ...course,
+      modules: nestCurriculum(modules, visibleLessons),
+      isOwner,
+      isEnrolled,
+    },
+  });
+});
+
+/**
+ * GET /api/courses/:id/learn   (protect)
+ * Full course content + this student's progress. Requires enrollment (or owner).
+ */
+export const getCourseLearn = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    throw new ApiError(400, 'Invalid course id.');
+  }
+  const course = await Course.findById(req.params.id)
+    .populate('instructor', 'name avatar')
+    .lean();
+  if (!course) throw new ApiError(404, 'Course not found.');
+
+  const isOwner =
+    String(course.instructor._id) === String(req.user._id) || req.user.role === 'admin';
+
+  if (!isOwner) {
+    if (!course.isPublished) throw new ApiError(404, 'Course not found.');
+    const enrolled = await Enrollment.exists({ student: req.user._id, course: course._id });
+    if (!enrolled) throw new ApiError(403, 'Enroll in this course to start learning.');
+  }
+
+  const [modules, lessons, progressRecords] = await Promise.all([
+    Module.find({ course: course._id }).sort({ order: 1, createdAt: 1 }).lean(),
+    Lesson.find({ course: course._id }).sort({ order: 1, createdAt: 1 }).lean(),
+    Progress.find({ student: req.user._id, course: course._id }).lean(),
+  ]);
+
+  const progressByLesson = Object.fromEntries(
+    progressRecords.map((p) => [String(p.lesson), p])
+  );
+
+  const lessonsWithProgress = lessons.map((l) => {
+    const p = progressByLesson[String(l._id)];
+    return {
+      ...l,
+      completed: p?.completed || false,
+      watchedSeconds: p?.watchedSeconds || 0,
+    };
+  });
+
+  const totalLessons = lessons.length;
+  const completedLessons = progressRecords.filter((p) => p.completed).length;
+  const percent = totalLessons ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+  res.json({
+    success: true,
+    course: {
+      ...course,
+      modules: nestCurriculum(modules, lessonsWithProgress),
+      isOwner,
+    },
+    progress: { percent, totalLessons, completedLessons },
+  });
 });
 
 /**

@@ -8,9 +8,14 @@ import InstructorDashboard from './pages/dashboards/InstructorDashboard.jsx';
 import StudentDashboard from './pages/dashboards/StudentDashboard.jsx';
 import CourseList from './pages/instructor/CourseList.jsx';
 import CourseBuilder from './pages/instructor/CourseBuilder.jsx';
+import BrowseCourses from './pages/BrowseCourses.jsx';
+import CourseDetail from './pages/CourseDetail.jsx';
+import MyCourses from './pages/MyCourses.jsx';
+import CoursePlayer from './pages/CoursePlayer.jsx';
 
 import GuestRoute from './routes/GuestRoute.jsx';
 import RoleRoute from './routes/RoleRoute.jsx';
+import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import DashboardLayout from './components/DashboardLayout.jsx';
 
 /**
@@ -30,6 +35,15 @@ export default function App() {
       </Route>
 
       <Route element={<DashboardLayout />}>
+        {/* Shared authenticated pages (any logged-in user) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/courses" element={<BrowseCourses />} />
+          <Route path="/courses/:id" element={<CourseDetail />} />
+          <Route path="/learn/:courseId" element={<CoursePlayer />} />
+          <Route path="/learn/:courseId/:lessonId" element={<CoursePlayer />} />
+          <Route path="/student/my-courses" element={<MyCourses />} />
+        </Route>
+
         <Route element={<RoleRoute roles={['admin']} />}>
           <Route path="/admin" element={<AdminDashboard />} />
         </Route>

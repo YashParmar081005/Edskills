@@ -9,9 +9,9 @@ const accent = {
 };
 
 const cards = [
-  { Icon: Compass, label: 'Browse Courses', desc: 'Discover and enroll in new courses.', soon: true },
-  { Icon: GraduationCap, label: 'My Courses', desc: 'Resume learning where you left off.', soon: true },
-  { Icon: PlayCircle, label: 'Lessons & Progress', desc: 'Watch lessons and track completion.', soon: true },
+  { Icon: Compass, label: 'Browse Courses', desc: 'Discover and enroll in new courses.', to: '/courses' },
+  { Icon: GraduationCap, label: 'My Learning', desc: 'Resume learning where you left off.', to: '/student/my-courses' },
+  { Icon: PlayCircle, label: 'Lessons & Progress', desc: 'Watch lessons and track completion.', to: '/student/my-courses' },
   { Icon: FileQuestion, label: 'Quizzes', desc: 'Test yourself with AI-graded quizzes.', soon: true },
   { Icon: MessagesSquare, label: 'Ask & Discuss', desc: 'Get help in course forums + AI Q&A.', soon: true },
   { Icon: Award, label: 'Certificates', desc: 'Earn certificates on completion.', soon: true },

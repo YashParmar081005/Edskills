@@ -1,9 +1,24 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import { LogOut, ChevronDown, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth, DASHBOARD_BY_ROLE } from '../context/AuthContext.jsx';
 import Logo from './Logo.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
+
+/** Primary nav links by role. */
+function navLinksFor(role) {
+  const dash = { to: DASHBOARD_BY_ROLE[role] || '/', label: 'Dashboard' };
+  if (role === 'student') {
+    return [dash, { to: '/courses', label: 'Browse' }, { to: '/student/my-courses', label: 'My Learning' }];
+  }
+  if (role === 'instructor') {
+    return [dash, { to: '/instructor/courses', label: 'My Courses' }, { to: '/courses', label: 'Browse' }];
+  }
+  if (role === 'admin') {
+    return [dash, { to: '/instructor/courses', label: 'All Courses' }, { to: '/courses', label: 'Browse' }];
+  }
+  return [];
+}
 
 const ROLE_STYLES = {
   admin: 'bg-rose-500/15 text-rose-600 dark:text-rose-300 ring-rose-500/30',
@@ -42,7 +57,29 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-30 px-4 pt-4">
       <nav className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-4 py-3">
-        <Logo />
+        <div className="flex items-center gap-6">
+          <Logo />
+          {user && (
+            <div className="hidden items-center gap-1 md:flex">
+              {navLinksFor(user.role).map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  end
+                  className={({ isActive }) =>
+                    `rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                      isActive
+                        ? 'bg-sky-500/15 text-brand-700 dark:text-brand-200'
+                        : 'text-slate-600 hover:bg-white/40 dark:text-slate-300 dark:hover:bg-white/5'
+                    }`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           <ThemeToggle />

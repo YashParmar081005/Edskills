@@ -33,6 +33,26 @@ export const protect = asyncHandler(async (req, res, next) => {
 });
 
 /**
+ * optionalAuth — attach req.user if a valid token is present, otherwise
+ * continue as an anonymous request. Never throws. Used on endpoints that are
+ * public but behave differently for the owner / enrolled user.
+ */
+export const optionalAuth = asyncHandler(async (req, res, next) => {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+  if (!token) return next();
+
+  try {
+    const payload = verifyAccessToken(token);
+    const user = await User.findById(payload.sub);
+    if (user) req.user = user;
+  } catch {
+    // ignore invalid/expired token — treat as anonymous
+  }
+  next();
+});
+
+/**
  * authorize(...roles) — gate a route to specific roles.
  * Must be used after `protect`.
  *
