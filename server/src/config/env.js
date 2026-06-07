@@ -31,6 +31,11 @@ export const env = {
     apiKey: process.env.CLOUDINARY_API_KEY || '',
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
   },
+
+  // AI / LLM (Phase 5)
+  aiProvider: process.env.AI_PROVIDER || 'groq',
+  groqApiKey: process.env.GROQ_API_KEY || '',
+  groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
 };
 
 export const isProduction = env.nodeEnv === 'production';

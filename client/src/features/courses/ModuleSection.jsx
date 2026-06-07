@@ -10,8 +10,10 @@ import {
   Video,
   FileText,
   GripVertical,
+  ListChecks,
 } from 'lucide-react';
 import LessonFormModal from './LessonFormModal.jsx';
+import QuizEditorModal from '../quiz/QuizEditorModal.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import {
   useUpdateModule,
@@ -29,7 +31,7 @@ function fmtDuration(s) {
   return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-function LessonRow({ lesson, index, total, onEdit, onDelete, onMove }) {
+function LessonRow({ lesson, index, total, onEdit, onDelete, onMove, onQuiz }) {
   const isVideo = lesson.type === 'video';
   return (
     <div className="glass-soft flex items-center gap-3 p-3">
@@ -73,6 +75,13 @@ function LessonRow({ lesson, index, total, onEdit, onDelete, onMove }) {
         </p>
       </div>
 
+      <button
+        onClick={() => onQuiz(lesson)}
+        className="icon-btn h-8 w-8 text-sky-500"
+        title="Quiz for this lesson"
+      >
+        <ListChecks className="h-3.5 w-3.5" />
+      </button>
       <button onClick={() => onEdit(lesson)} className="icon-btn h-8 w-8" title="Edit lesson">
         <Pencil className="h-3.5 w-3.5" />
       </button>
@@ -109,6 +118,7 @@ export default function ModuleSection({
   const [editingLesson, setEditingLesson] = useState(null);
   const [deletingLesson, setDeletingLesson] = useState(null);
   const [confirmDeleteModule, setConfirmDeleteModule] = useState(false);
+  const [quizLesson, setQuizLesson] = useState(null);
 
   const saveTitle = () => {
     const t = title.trim();
@@ -215,6 +225,7 @@ export default function ModuleSection({
             onEdit={setEditingLesson}
             onDelete={setDeletingLesson}
             onMove={moveLesson}
+            onQuiz={setQuizLesson}
           />
         ))}
 
@@ -283,6 +294,13 @@ export default function ModuleSection({
             onSuccess: () => setConfirmDeleteModule(false),
           })
         }
+      />
+
+      {/* Quiz editor */}
+      <QuizEditorModal
+        open={!!quizLesson}
+        lesson={quizLesson}
+        onClose={() => setQuizLesson(null)}
       />
     </div>
   );

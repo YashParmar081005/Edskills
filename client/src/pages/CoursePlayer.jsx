@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useCourseLearn, learnKeys } from '../features/learn/hooks.js';
 import { saveProgress } from '../api/learn.js';
+import QuizTaker from '../features/quiz/QuizTaker.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
 import Spinner from '../components/Spinner.jsx';
 
@@ -227,6 +228,9 @@ export default function CoursePlayer() {
               {completed[currentId] ? 'Completed' : 'Mark complete'}
             </button>
           </div>
+
+          {/* Lesson quiz (renders only if the lesson has one) */}
+          {currentId && <QuizTaker lessonId={currentId} />}
 
           {/* Prev / Next */}
           <div className="flex items-center justify-between">
