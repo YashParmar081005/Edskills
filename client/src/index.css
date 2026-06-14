@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* Poppins — a friendly, highly readable geometric sans widely used across
+   education / e-learning platforms. Lexend (a reading-optimised education font)
+   is loaded too as a swap-in alternative. */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -20,15 +23,15 @@
 
   body {
     @apply font-sans text-slate-800 antialiased dark:text-slate-100;
-    /* Light theme: sky-blue → white → blue wash */
-    background: linear-gradient(135deg, #e0f2fe 0%, #f8fbff 45%, #dbeafe 100%);
+    /* Light theme: clean white with a barely-there cool tint for depth */
+    background: linear-gradient(135deg, #ffffff 0%, #f7f9fc 50%, #eef1f6 100%);
     background-attachment: fixed;
     transition: background 0.5s ease, color 0.3s ease;
   }
 
   html.dark body {
-    /* Dark theme: black → deep navy → blue hint */
-    background: linear-gradient(135deg, #02040a 0%, #0a1020 55%, #0b1a33 100%);
+    /* Dark theme: near-pure black with a faint neutral lift */
+    background: linear-gradient(135deg, #000000 0%, #070708 55%, #0c0c0f 100%);
     background-attachment: fixed;
   }
 
@@ -49,30 +52,30 @@
   /* Frosted-glass surface. box-shadow is literal (not a config utility) so the
      glass effect never depends on Tailwind theme reloads. */
   .glass {
-    @apply border border-white/40 bg-white/55 backdrop-blur-xl
-      dark:border-white/10 dark:bg-white/[0.06];
-    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.12);
+    @apply border border-slate-200/80 bg-white/70 backdrop-blur-xl
+      dark:border-white/10 dark:bg-white/[0.05];
+    box-shadow: 0 8px 28px 0 rgba(15, 23, 42, 0.08);
   }
 
   .glass-card {
-    @apply rounded-2xl border border-white/40 bg-white/55 backdrop-blur-xl
-      dark:border-white/10 dark:bg-white/[0.06];
-    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.12);
+    @apply rounded-2xl border border-slate-200/80 bg-white/70 backdrop-blur-xl
+      dark:border-white/10 dark:bg-white/[0.05];
+    box-shadow: 0 8px 28px 0 rgba(15, 23, 42, 0.08);
   }
 
   html.dark .glass,
   html.dark .glass-card {
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
   }
 
   /* Solid panel for pop-ups / modals / dropdowns — opaque so nothing behind
      bleeds through. Keeps rounded corners + a strong floating shadow. */
   .solid-card {
-    @apply rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900;
-    box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.45);
+    @apply rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0e0e12];
+    box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.35);
   }
   html.dark .solid-card {
-    box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.8);
   }
 
   /* Subtle glass for nested panels */
@@ -82,10 +85,20 @@
   }
 
   .glass-input {
-    @apply w-full rounded-xl border border-white/50 bg-white/60 px-4 py-2.5 text-slate-900
+    @apply w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2.5 text-slate-900
       placeholder-slate-400 outline-none backdrop-blur-md transition
       focus:border-transparent focus:ring-2 focus:ring-sky-400/70
       dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:placeholder-slate-500;
+  }
+
+  /* Native <select> dropdown panels don't inherit glass styles — give options
+     solid, readable colors in both themes (else dark mode shows white-on-white). */
+  select.glass-input option {
+    @apply bg-white text-slate-900;
+  }
+  html.dark select.glass-input option {
+    background-color: #0f172a;
+    color: #f1f5f9;
   }
 
   .btn-primary {
@@ -96,15 +109,15 @@
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/40
-      bg-white/40 px-4 py-2.5 text-sm font-semibold text-slate-700 backdrop-blur-md
-      transition hover:bg-white/60 dark:border-white/10 dark:bg-white/5 dark:text-slate-200
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200
+      bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-700 backdrop-blur-md
+      transition hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-slate-200
       dark:hover:bg-white/10;
   }
 
   .icon-btn {
-    @apply inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/40
-      bg-white/40 text-slate-700 backdrop-blur-md transition hover:bg-white/60
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200
+      bg-white/70 text-slate-700 backdrop-blur-md transition hover:bg-white
       dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10;
   }
 }

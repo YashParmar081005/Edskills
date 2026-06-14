@@ -8,6 +8,7 @@ import {
   updateMe,
   updateSettings,
   changePassword,
+  oauthInsforge,
 } from '../controllers/auth.controller.js';
 import {
   registerValidator,
@@ -25,6 +26,7 @@ router.post('/register', authLimiter, registerValidator, validate, register);
 router.post('/login', authLimiter, loginValidator, validate, login);
 router.post('/refresh', refresh);
 router.post('/logout', logout);
+router.post('/oauth/insforge', authLimiter, oauthInsforge);
 router.get('/me', protect, me);
 router.patch('/me', protect, updateMeValidator, validate, updateMe);
 router.patch('/me/settings', protect, updateSettings);

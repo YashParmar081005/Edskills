@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Compass } from 'lucide-react';
 import { useBrowseCourses } from '../features/learn/hooks.js';
 import { CATEGORIES } from '../features/courses/CourseFormModal.jsx';
@@ -14,10 +15,18 @@ const SORTS = [
 ];
 
 export default function BrowseCourses() {
-  const [search, setSearch] = useState('');
-  const [q, setQ] = useState('');
+  const [params] = useSearchParams();
+  const initialQ = params.get('q') || '';
+  const [search, setSearch] = useState(initialQ);
+  const [q, setQ] = useState(initialQ);
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('newest');
+
+  // Pre-fill from a ?q= deep link (e.g. the navbar "See all results").
+  useEffect(() => {
+    setSearch(initialQ);
+    setQ(initialQ);
+  }, [initialQ]);
 
   // debounce the search input
   useEffect(() => {
@@ -108,7 +117,7 @@ export default function BrowseCourses() {
       {courses?.length > 0 && (
         <div className={`grid gap-5 sm:grid-cols-2 lg:grid-cols-3 ${isFetching ? 'opacity-70' : ''}`}>
           {courses.map((c) => (
-            <PublicCourseCard key={c._id} course={c} />
+            <PublicCourseCard key={c._id} course={c} showWishlist />
           ))}
         </div>
       )}

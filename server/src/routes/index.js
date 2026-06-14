@@ -18,6 +18,11 @@ import paymentRoutes from './payment.routes.js';
 import certificateRoutes from './certificate.routes.js';
 import analyticsRoutes from './analytics.routes.js';
 import userRoutes from './user.routes.js';
+import reviewRoutes from './review.routes.js';
+import couponRoutes from './coupon.routes.js';
+import gamificationRoutes from './gamification.routes.js';
+import wishlistRoutes from './wishlist.routes.js';
+import noteRoutes, { bookmarkRouter } from './note.routes.js';
 
 /**
  * Root API router. Mount every feature router here so app.js stays clean.
@@ -44,5 +49,11 @@ router.use('/payments', paymentRoutes);
 router.use('/certificates', certificateRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/users', userRoutes);
+router.use('/reviews', reviewRoutes);
+router.use('/coupons', couponRoutes);
+router.use('/gamification', gamificationRoutes);
+router.use('/wishlist', wishlistRoutes);
+router.use('/notes', noteRoutes);
+router.use('/bookmarks', bookmarkRouter);
 
 export default router;

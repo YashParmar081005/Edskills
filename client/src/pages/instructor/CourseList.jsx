@@ -25,6 +25,21 @@ function priceLabel(p) {
   return p > 0 ? `$${Number(p).toFixed(2)}` : 'Free';
 }
 
+const STATUS_PILL = {
+  draft: 'bg-slate-500/20 text-slate-700 ring-slate-400/40 dark:text-slate-200',
+  pending: 'bg-amber-500/20 text-amber-700 ring-amber-500/40 dark:text-amber-300',
+  rejected: 'bg-rose-500/20 text-rose-700 ring-rose-500/40 dark:text-rose-300',
+  approved: 'bg-green-500/20 text-green-700 ring-green-500/40 dark:text-green-300',
+};
+
+function STATUS_LABEL(course) {
+  const s = course.status || 'draft';
+  if (s === 'pending') return 'Pending';
+  if (s === 'rejected') return 'Needs changes';
+  if (s === 'approved') return course.isPublished ? 'Published' : 'Approved';
+  return 'Draft';
+}
+
 function CourseCard({ course, onEdit, onDelete }) {
   return (
     <div className="glass-card group flex flex-col overflow-hidden transition hover:-translate-y-0.5 hover:shadow-glow">
@@ -37,14 +52,9 @@ function CourseCard({ course, onEdit, onDelete }) {
           </div>
         )}
         <span
-          className={`absolute right-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur-md ${
-            course.isPublished
-              ? 'bg-green-500/20 text-green-700 ring-1 ring-green-500/40 dark:text-green-300'
-              : 'bg-slate-500/20 text-slate-700 ring-1 ring-slate-400/40 dark:text-slate-200'
-          }`}
+          className={`absolute right-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 backdrop-blur-md ${STATUS_PILL[course.status] || STATUS_PILL.draft}`}
         >
-          {course.isPublished ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-          {course.isPublished ? 'Published' : 'Draft'}
+          {STATUS_LABEL(course)}
         </span>
       </div>
 

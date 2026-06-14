@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
  * Each dashboard (admin/instructor/student) passes its own greeting + cards.
  * A card with a `to` prop becomes a clickable link (and drops the "Soon" badge).
  */
-export default function DashboardScaffold({ accent, badge, title, blurb, cards = [] }) {
+export default function DashboardScaffold({ accent, badge, title, blurb, cards = [], extra }) {
   const { user } = useAuth();
 
   return (
@@ -22,6 +22,9 @@ export default function DashboardScaffold({ accent, badge, title, blurb, cards =
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">{blurb}</p>
       </section>
+
+      {/* Optional extra content (e.g. gamification widget) */}
+      {extra}
 
       {/* Feature cards */}
       <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

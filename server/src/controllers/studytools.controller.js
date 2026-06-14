@@ -44,6 +44,7 @@ export const askDoc = asyncHandler(async (req, res) => {
       documentText: String(text),
       question: String(question),
       history: Array.isArray(history) ? history : [],
+      meta: { user: req.user._id, type: 'doc-qa' },
     });
     res.json({ success: true, ...result });
   } catch (err) {
@@ -66,6 +67,7 @@ export const flashcards = asyncHandler(async (req, res) => {
       topic: String(topic || '').trim(),
       count: Number(count) || 10,
       context: String(context || ''),
+      meta: { user: req.user._id, type: 'flashcards' },
     });
     res.json({ success: true, cards });
   } catch (err) {
@@ -89,6 +91,7 @@ export const mockTest = asyncHandler(async (req, res) => {
       numQuestions: Number(numQuestions) || 5,
       difficulty: ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : 'medium',
       context: String(context || ''),
+      meta: { user: req.user._id, type: 'mock-test' },
     });
     res.json({ success: true, questions });
   } catch (err) {

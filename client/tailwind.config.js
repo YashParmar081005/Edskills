@@ -29,7 +29,11 @@ export default {
         },
       },
       fontFamily: {
+        // Education-friendly type: Poppins for UI, Lexend as a reading-optimised
+        // fallback. Swap the order to make Lexend primary.
         sans: [
+          'Poppins',
+          'Lexend',
           'Inter',
           'system-ui',
           '-apple-system',

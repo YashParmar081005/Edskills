@@ -5,12 +5,14 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { emitToUser } from '../sockets/index.js';
 
-/** GET /api/notifications  → recent notifications + unread count */
+/** GET /api/notifications  → notifications + unread count.
+ *  ?all=1 returns up to 100 (for the full notifications page). */
 export const getNotifications = asyncHandler(async (req, res) => {
+  const limit = req.query.all ? 100 : 30;
   const [notifications, unreadCount] = await Promise.all([
     Notification.find({ user: req.user._id })
       .sort({ createdAt: -1 })
-      .limit(30)
+      .limit(limit)
       .populate('actor', 'name avatar')
       .lean(),
     Notification.countDocuments({ user: req.user._id, read: false }),

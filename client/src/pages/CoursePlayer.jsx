@@ -18,6 +18,7 @@ import {
 import { useCourseLearn, learnKeys } from '../features/learn/hooks.js';
 import { saveProgress } from '../api/learn.js';
 import QuizTaker from '../features/quiz/QuizTaker.jsx';
+import LessonNotes from '../features/learn/LessonNotes.jsx';
 import CertificateButton from '../features/certificates/CertificateButton.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
 import Spinner from '../components/Spinner.jsx';
@@ -253,6 +254,9 @@ export default function CoursePlayer() {
               {completed[currentId] ? 'Completed' : 'Mark complete'}
             </button>
           </div>
+
+          {/* Per-lesson notes + bookmark */}
+          {currentId && <LessonNotes courseId={courseId} lessonId={currentId} />}
 
           {/* Lesson quiz (renders only if the lesson has one) */}
           {currentId && <QuizTaker lessonId={currentId} />}

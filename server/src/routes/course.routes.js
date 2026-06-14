@@ -6,6 +6,9 @@ import {
   updateCourse,
   deleteCourse,
   togglePublish,
+  submitForReview,
+  reviewCourse,
+  getPendingCourses,
   listPublicCourses,
   getCourseLearn,
 } from '../controllers/course.controller.js';
@@ -18,6 +21,7 @@ import {
 } from '../controllers/assignment.controller.js';
 import { listThreads, createThread } from '../controllers/forum.controller.js';
 import { getCourseCertificate } from '../controllers/certificate.controller.js';
+import { listReviews, upsertReview } from '../controllers/review.controller.js';
 import { protect, authorize, optionalAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
@@ -37,6 +41,10 @@ router.get('/', listPublicCourses); // browse published courses
 router.get('/mine', ...instructor, getMyCourses);
 router.post('/', ...instructor, createCourseValidator, validate, createCourse);
 
+/* --------------------------- Admin: approval queue -------------------------- */
+// Literal path before "/:id".
+router.get('/admin/pending', protect, authorize('admin'), getPendingCourses);
+
 /* --------------------------- Student: enroll / learn ------------------------ */
 router.post('/:id/enroll', protect, enroll);
 router.get('/:id/learn', protect, getCourseLearn);
@@ -53,6 +61,10 @@ router.post('/:id/threads', protect, createThread);
 /* ------------------------------- Certificate -------------------------------- */
 router.get('/:id/certificate', protect, getCourseCertificate);
 
+/* --------------------------------- Reviews ---------------------------------- */
+router.get('/:id/reviews', optionalAuth, listReviews);
+router.post('/:id/reviews', protect, upsertReview);
+
 /* --------------------------- Public-or-owner detail ------------------------- */
 router.get('/:id', optionalAuth, getCourse);
 
@@ -60,6 +72,8 @@ router.get('/:id', optionalAuth, getCourse);
 router.put('/:id', ...instructor, updateCourseValidator, validate, updateCourse);
 router.delete('/:id', ...instructor, deleteCourse);
 router.post('/:id/publish', ...instructor, togglePublish);
+router.post('/:id/submit', ...instructor, submitForReview);
+router.post('/:id/review', protect, authorize('admin'), reviewCourse);
 router.post('/:id/modules', ...instructor, moduleValidator, validate, addModule);
 router.put('/:id/modules/reorder', ...instructor, reorderModules);
 

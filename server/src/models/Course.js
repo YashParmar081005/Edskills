@@ -45,6 +45,21 @@ const courseSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    // Approval workflow: a course must be admin-approved before it can go public.
+    // 'draft' → instructor editing · 'pending' → submitted, awaiting admin
+    // 'approved' → admin OK'd (instructor may publish) · 'rejected' → sent back.
+    status: {
+      type: String,
+      enum: ['draft', 'pending', 'approved', 'rejected'],
+      default: 'draft',
+      index: true,
+    },
+    reviewNote: {
+      type: String,
+      default: '', // admin's note when rejecting (or approving)
+    },
+    reviewedAt: { type: Date },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     category: {
       type: String,
       enum: COURSE_CATEGORIES,
@@ -55,6 +70,14 @@ const courseSchema = new mongoose.Schema(
       default: [],
     },
     totalEnrollments: {
+      type: Number,
+      default: 0,
+    },
+    ratingAvg: {
+      type: Number,
+      default: 0, // 0–5, denormalized from reviews
+    },
+    ratingCount: {
       type: Number,
       default: 0,
     },

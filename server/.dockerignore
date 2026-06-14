@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+.insforge
+insforge.toml
+*.md
+.git

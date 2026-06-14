@@ -19,7 +19,11 @@ export function SocketProvider({ children }) {
     const token = getAccessToken();
     if (!token) return undefined;
 
-    const s = io({
+    // In dev, VITE_API_URL is unset → same-origin via the Vite ws proxy.
+    // In prod, point the socket at the backend origin (VITE_API_URL minus /api).
+    const apiUrl = import.meta.env.VITE_API_URL;
+    const socketUrl = apiUrl ? apiUrl.replace(/\/api\/?$/, '') : undefined;
+    const s = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
     });

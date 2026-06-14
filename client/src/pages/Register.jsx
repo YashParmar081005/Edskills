@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth, DASHBOARD_BY_ROLE } from '../context/AuthContext.jsx';
 import AuthShell from '../features/auth/AuthShell.jsx';
+import GoogleButton from '../features/auth/GoogleButton.jsx';
 import Spinner from '../components/Spinner.jsx';
 
 const ROLE_OPTIONS = [
@@ -187,6 +188,11 @@ export default function Register() {
           {mutation.isPending ? 'Creating account…' : 'Create account'}
         </button>
       </form>
+
+      <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
+        <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" /> or <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+      </div>
+      <GoogleButton label="Sign up with Google" />
     </AuthShell>
   );
 }

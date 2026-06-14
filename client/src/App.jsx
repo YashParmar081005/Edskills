@@ -22,6 +22,8 @@ import ThreadDetail from './pages/ThreadDetail.jsx';
 import PaymentSuccess from './pages/PaymentSuccess.jsx';
 import CertificateVerify from './pages/CertificateVerify.jsx';
 import InstructorAnalytics from './pages/InstructorAnalytics.jsx';
+import InstructorEarnings from './pages/InstructorEarnings.jsx';
+import InstructorCoupons from './pages/InstructorCoupons.jsx';
 import AdminAnalytics from './pages/AdminAnalytics.jsx';
 import AdminAnnouncements from './pages/AdminAnnouncements.jsx';
 import AdminPayments from './pages/AdminPayments.jsx';
@@ -31,8 +33,16 @@ import MyCertificates from './pages/MyCertificates.jsx';
 import MyQuizzes from './pages/MyQuizzes.jsx';
 import DiscussHub from './pages/DiscussHub.jsx';
 import StudyTools from './pages/StudyTools.jsx';
+import Leaderboard from './pages/Leaderboard.jsx';
 import Profile from './pages/Profile.jsx';
 import Settings from './pages/Settings.jsx';
+import Wishlist from './pages/Wishlist.jsx';
+import MyNotes from './pages/MyNotes.jsx';
+import NotificationsPage from './pages/NotificationsPage.jsx';
+import AdminApprovals from './pages/AdminApprovals.jsx';
+import AdminAiUsage from './pages/AdminAiUsage.jsx';
+
+import OAuthCallback from './pages/OAuthCallback.jsx';
 
 import GuestRoute from './routes/GuestRoute.jsx';
 import RoleRoute from './routes/RoleRoute.jsx';
@@ -53,6 +63,9 @@ export default function App() {
       {/* Public certificate verification */}
       <Route path="/verify/:certificateId" element={<CertificateVerify />} />
 
+      {/* OAuth return URL (Google → InsForge → here) */}
+      <Route path="/oauth/callback" element={<OAuthCallback />} />
+
       <Route element={<GuestRoute />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -63,6 +76,9 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/student/wishlist" element={<Wishlist />} />
+          <Route path="/student/notes" element={<MyNotes />} />
           <Route path="/courses" element={<BrowseCourses />} />
           <Route path="/courses/:id" element={<CourseDetail />} />
           <Route path="/learn/:courseId" element={<CoursePlayer />} />
@@ -76,6 +92,7 @@ export default function App() {
           <Route path="/student/quizzes" element={<MyQuizzes />} />
           <Route path="/student/discuss" element={<DiscussHub />} />
           <Route path="/student/tools" element={<StudyTools />} />
+          <Route path="/student/leaderboard" element={<Leaderboard />} />
         </Route>
 
         <Route element={<RoleRoute roles={['admin']} />}>
@@ -85,6 +102,8 @@ export default function App() {
           <Route path="/admin/payments" element={<AdminPayments />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/roles" element={<AdminRoles />} />
+          <Route path="/admin/approvals" element={<AdminApprovals />} />
+          <Route path="/admin/ai-usage" element={<AdminAiUsage />} />
         </Route>
         <Route element={<RoleRoute roles={['instructor', 'admin']} />}>
           <Route path="/instructor" element={<InstructorDashboard />} />
@@ -94,6 +113,8 @@ export default function App() {
           <Route path="/instructor/assignments" element={<InstructorAssignmentsHub />} />
           <Route path="/instructor/discussions" element={<InstructorDiscussions />} />
           <Route path="/instructor/analytics" element={<InstructorAnalytics />} />
+          <Route path="/instructor/earnings" element={<InstructorEarnings />} />
+          <Route path="/instructor/coupons" element={<InstructorCoupons />} />
           <Route
             path="/instructor/assignments/:assignmentId/submissions"
             element={<SubmissionsGrading />}

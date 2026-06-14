@@ -47,6 +47,7 @@ export const generateQuiz = asyncHandler(async (req, res) => {
     const questions = await generateQuizQuestions(content, {
       numQuestions: numQuestions || 5,
       title: lesson.title,
+      meta: { user: req.user._id, type: 'quiz' },
     });
     res.json({ success: true, questions });
   } catch (err) {
@@ -97,7 +98,7 @@ export const generateAvatar = asyncHandler(async (req, res) => {
 
   if (isAIConfigured()) {
     try {
-      seeds = await generateAvatarSeeds({ name, prompt, count });
+      seeds = await generateAvatarSeeds({ name, prompt, count, meta: { user: req.user._id, type: 'avatar' } });
       aiUsed = seeds.length > 0;
     } catch {
       seeds = []; // fall back below
@@ -138,6 +139,7 @@ export const gradeAnswer = asyncHandler(async (req, res) => {
       answer,
       maxPoints: Number(maxPoints) || 1,
       rubric,
+      meta: { user: req.user._id, type: 'grade' },
     });
     res.json({ success: true, ...result });
   } catch (err) {

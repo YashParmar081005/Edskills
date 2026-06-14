@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Bell, MessagesSquare, CheckCheck, BadgeCheck, Reply } from 'lucide-react';
@@ -131,6 +131,14 @@ export default function NotificationBell() {
               })
             )}
           </div>
+
+          <Link
+            to="/notifications"
+            onClick={() => setOpen(false)}
+            className="block border-t border-white/30 px-4 py-2.5 text-center text-sm font-semibold text-brand-600 transition hover:bg-white/40 dark:border-white/10 dark:text-brand-300 dark:hover:bg-white/5"
+          >
+            See all notifications
+          </Link>
         </div>
       )}
     </div>

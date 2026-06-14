@@ -4,6 +4,7 @@ import { LogOut, ChevronDown, ShieldCheck, UserCog, SlidersHorizontal } from 'lu
 import { useAuth, DASHBOARD_BY_ROLE } from '../context/AuthContext.jsx';
 import Logo from './Logo.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
+import NavSearch from './NavSearch.jsx';
 import NotificationBell from '../features/notifications/NotificationBell.jsx';
 
 /** Primary nav links by role. */
@@ -83,6 +84,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          {user && <NavSearch />}
           {user && <NotificationBell />}
           <ThemeToggle />
 

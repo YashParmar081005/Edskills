@@ -8,6 +8,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ensureCourseOwner } from '../utils/courseAccess.js';
 import { gradeOpenAnswer } from '../services/ai/index.js';
+import { awardXp, XP } from '../services/gamification.service.js';
 
 /** Normalize/validate incoming questions for save. */
 function normalizeQuestions(raw) {
@@ -237,6 +238,9 @@ export const attemptQuiz = asyncHandler(async (req, res) => {
     maxScore,
     percentage,
   });
+
+  // Gamification (students only) — fire-and-forget.
+  if (!isOwner) awardXp(req.user._id, XP.quiz, { action: 'quiz', meta: { percentage } });
 
   res.status(201).json({
     success: true,

@@ -18,6 +18,12 @@ export async function refreshRequest() {
   return data;
 }
 
+/** POST /auth/oauth/insforge → { accessToken, user } (exchange InsForge token for an app session) */
+export async function oauthInsforgeRequest(accessToken) {
+  const { data } = await api.post('/auth/oauth/insforge', { accessToken });
+  return data;
+}
+
 /** POST /auth/logout */
 export async function logoutRequest() {
   const { data } = await api.post('/auth/logout');

@@ -44,6 +44,23 @@ export async function togglePublish(id, isPublished) {
   return data;
 }
 
+export async function submitForReview(id) {
+  const { data } = await api.post(`/courses/${id}/submit`);
+  return data;
+}
+
+/* ----------------------------- Admin approvals ------------------------------ */
+
+export async function getPendingCourses() {
+  const { data } = await api.get('/courses/admin/pending');
+  return data.courses;
+}
+
+export async function reviewCourse(id, decision, note) {
+  const { data } = await api.post(`/courses/${id}/review`, { decision, note });
+  return data;
+}
+
 /* ---------------------------------- Modules --------------------------------- */
 
 export async function addModule(courseId, title) {

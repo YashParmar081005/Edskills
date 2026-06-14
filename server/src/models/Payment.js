@@ -17,9 +17,10 @@ const paymentSchema = new mongoose.Schema(
       index: true,
     },
     stripeSessionId: { type: String, required: true, unique: true },
-    amount: { type: Number, default: 0 }, // gross, in major units (e.g. dollars)
+    amount: { type: Number, default: 0 }, // charged amount (after any coupon), major units
     platformFee: { type: Number, default: 0 }, // 10% — credited to the platform/admin
     instructorEarning: { type: Number, default: 0 }, // 90% — credited to the instructor
+    couponCode: { type: String, default: '' },
     currency: { type: String, default: 'usd' },
     status: { type: String, enum: PAYMENT_STATUS, default: 'pending' },
   },

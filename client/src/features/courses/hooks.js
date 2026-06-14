@@ -60,6 +60,19 @@ export function useDeleteCourse() {
   });
 }
 
+export function useSubmitForReview(courseId) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.submitForReview(courseId),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: courseKeys.detail(courseId) });
+      qc.invalidateQueries({ queryKey: courseKeys.mine });
+      toast.success(data.message || 'Submitted for review');
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Could not submit'),
+  });
+}
+
 export function useTogglePublish(courseId) {
   const qc = useQueryClient();
   return useMutation({

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { BookOpen, PlayCircle, Users, GraduationCap } from 'lucide-react';
 import ProgressBar from '../../components/ProgressBar.jsx';
+import StarRating from '../../components/StarRating.jsx';
+import WishlistButton from '../wishlist/WishlistButton.jsx';
 
 export function priceLabel(p) {
   return p > 0 ? `$${Number(p).toFixed(2)}` : 'Free';
@@ -9,8 +11,9 @@ export function priceLabel(p) {
 /**
  * Course card used on Browse and My Courses.
  * Pass `progressPercent` (and `to` override) to render the enrolled variant.
+ * Pass `showWishlist` to render a save-for-later heart.
  */
-export default function PublicCourseCard({ course, progressPercent, to }) {
+export default function PublicCourseCard({ course, progressPercent, to, showWishlist }) {
   const enrolled = typeof progressPercent === 'number';
   const href = to || `/courses/${course._id}`;
   const instructorName = course.instructor?.name || 'Instructor';
@@ -36,6 +39,11 @@ export default function PublicCourseCard({ course, progressPercent, to }) {
             {priceLabel(course.price)}
           </span>
         )}
+        {showWishlist && (
+          <div className="absolute bottom-2 right-2">
+            <WishlistButton courseId={course._id} size="sm" />
+          </div>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col p-4">
@@ -45,6 +53,11 @@ export default function PublicCourseCard({ course, progressPercent, to }) {
         <p className="mt-1 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
           <GraduationCap className="h-3.5 w-3.5" /> {instructorName}
         </p>
+        {course.ratingCount > 0 && (
+          <div className="mt-1.5">
+            <StarRating value={course.ratingAvg} count={course.ratingCount} showValue />
+          </div>
+        )}
 
         <div className="mt-3 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
           <span className="inline-flex items-center gap-1">

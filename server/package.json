@@ -8,9 +8,11 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed": "node src/seed/seedAdmin.js"
+    "seed": "node src/seed/seedAdmin.js",
+    "migrate:insforge": "node src/scripts/migrateUsersToInsforge.mjs"
   },
   "dependencies": {
+    "@insforge/sdk": "^1.4.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",

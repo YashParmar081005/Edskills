@@ -13,11 +13,16 @@ import {
   CheckCircle2,
   Pencil,
   CreditCard,
+  Ticket,
+  X,
 } from 'lucide-react';
 import { usePublicCourse, useEnroll } from '../features/learn/hooks.js';
 import { priceLabel } from '../features/learn/PublicCourseCard.jsx';
 import { createCheckout } from '../api/payments.js';
+import { validateCoupon } from '../api/coupons.js';
 import Spinner from '../components/Spinner.jsx';
+import StarRating from '../components/StarRating.jsx';
+import CourseReviews from '../features/reviews/CourseReviews.jsx';
 
 function fmtDuration(s) {
   if (!s) return '';
@@ -32,11 +37,36 @@ export default function CourseDetail() {
   const enrollMut = useEnroll(id);
   const [buying, setBuying] = useState(false);
 
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [applied, setApplied] = useState(null); // { code, percentOff, discountedPrice }
+  const [applying, setApplying] = useState(false);
+
+  const applyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setApplying(true);
+    try {
+      const data = await validateCoupon(couponInput.trim(), id);
+      setApplied(data);
+      toast.success(`Coupon applied — ${data.percentOff}% off`);
+    } catch (e) {
+      setApplied(null);
+      toast.error(e.response?.data?.message || 'Invalid coupon');
+    } finally {
+      setApplying(false);
+    }
+  };
+
   const handleBuy = async () => {
     setBuying(true);
     try {
-      const { url } = await createCheckout(id);
-      window.location.href = url; // redirect to Stripe Checkout
+      const res = await createCheckout(id, applied?.code);
+      if (res.free) {
+        toast.success('Enrolled with your coupon! 🎉');
+        navigate(`/learn/${id}`);
+        return;
+      }
+      window.location.href = res.url; // redirect to Stripe Checkout
     } catch (e) {
       toast.error(e.response?.data?.message || 'Could not start checkout');
       setBuying(false);
@@ -115,6 +145,9 @@ export default function CourseDetail() {
             <span className="inline-flex items-center gap-1">
               <Users className="h-4 w-4" /> {course.totalEnrollments || 0} enrolled
             </span>
+            {course.ratingCount > 0 && (
+              <StarRating value={course.ratingAvg} count={course.ratingCount} showValue />
+            )}
           </div>
         </div>
 
@@ -129,8 +162,22 @@ export default function CourseDetail() {
               </div>
             )}
           </div>
-          <div className="mt-4 text-3xl font-extrabold text-slate-900 dark:text-white">
-            {priceLabel(course.price)}
+          <div className="mt-4 flex items-baseline gap-2">
+            {applied ? (
+              <>
+                <span className="text-3xl font-extrabold text-slate-900 dark:text-white">
+                  {priceLabel(applied.discountedPrice)}
+                </span>
+                <span className="text-lg text-slate-400 line-through">{priceLabel(course.price)}</span>
+                <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-bold text-green-600 dark:text-green-300">
+                  -{applied.percentOff}%
+                </span>
+              </>
+            ) : (
+              <span className="text-3xl font-extrabold text-slate-900 dark:text-white">
+                {priceLabel(course.price)}
+              </span>
+            )}
           </div>
 
           <div className="mt-4 space-y-2">
@@ -143,10 +190,40 @@ export default function CourseDetail() {
                 <PlayCircle className="h-4 w-4" /> Continue learning
               </Link>
             ) : course.price > 0 ? (
-              <button onClick={handleBuy} disabled={buying} className="btn-primary w-full">
-                {buying ? <Spinner /> : <CreditCard className="h-4 w-4" />}
-                Buy for {priceLabel(course.price)}
-              </button>
+              <>
+                {/* Coupon */}
+                {applied ? (
+                  <div className="flex items-center justify-between rounded-xl border border-green-500/40 bg-green-500/10 px-3 py-2 text-sm">
+                    <span className="inline-flex items-center gap-1.5 font-semibold text-green-700 dark:text-green-300">
+                      <Ticket className="h-4 w-4" /> {applied.code}
+                    </span>
+                    <button
+                      onClick={() => { setApplied(null); setCouponInput(''); }}
+                      className="text-slate-400 hover:text-rose-500"
+                      title="Remove coupon"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyCoupon())}
+                      placeholder="Coupon code"
+                      className="glass-input !py-2 text-sm uppercase"
+                    />
+                    <button onClick={applyCoupon} disabled={applying || !couponInput.trim()} className="btn-ghost shrink-0 !py-2 text-sm">
+                      {applying ? <Spinner /> : 'Apply'}
+                    </button>
+                  </div>
+                )}
+                <button onClick={handleBuy} disabled={buying} className="btn-primary w-full">
+                  {buying ? <Spinner /> : <CreditCard className="h-4 w-4" />}
+                  Buy for {priceLabel(applied ? applied.discountedPrice : course.price)}
+                </button>
+              </>
             ) : (
               <button onClick={handleEnroll} disabled={enrollMut.isPending} className="btn-primary w-full">
                 {enrollMut.isPending ? <Spinner /> : <CheckCircle2 className="h-4 w-4" />}
@@ -203,6 +280,9 @@ export default function CourseDetail() {
           </div>
         )}
       </div>
+
+      {/* Reviews */}
+      <CourseReviews courseId={id} canReview={course.isEnrolled && !course.isOwner} />
     </div>
   );
 }

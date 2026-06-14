@@ -11,11 +11,16 @@ import {
   ClipboardList,
   MessagesSquare,
   Info,
+  Send,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   useCourse,
   useUpdateCourse,
   useTogglePublish,
+  useSubmitForReview,
   useAddModule,
   useReorderModules,
 } from '../../features/courses/hooks.js';
@@ -27,12 +32,31 @@ function priceLabel(p) {
   return p > 0 ? `$${Number(p).toFixed(2)}` : 'Free';
 }
 
+/** Course review-status pill. */
+export function StatusBadge({ status, isPublished }) {
+  let cls = 'bg-slate-500/20 text-slate-600 dark:text-slate-300';
+  let Icon = EyeOff;
+  let label = 'Draft';
+  if (status === 'pending') { cls = 'bg-amber-500/20 text-amber-700 dark:text-amber-300'; Icon = Clock; label = 'Pending review'; }
+  else if (status === 'rejected') { cls = 'bg-rose-500/20 text-rose-700 dark:text-rose-300'; Icon = AlertTriangle; label = 'Needs changes'; }
+  else if (status === 'approved') {
+    if (isPublished) { cls = 'bg-green-500/20 text-green-700 dark:text-green-300'; Icon = Eye; label = 'Published'; }
+    else { cls = 'bg-sky-500/20 text-sky-700 dark:text-sky-300'; Icon = CheckCircle2; label = 'Approved · hidden'; }
+  }
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold uppercase tracking-wide ${cls}`}>
+      <Icon className="h-3 w-3" /> {label}
+    </span>
+  );
+}
+
 export default function CourseBuilder() {
   const { id } = useParams();
   const { data: course, isLoading, isError, error } = useCourse(id);
 
   const updateMut = useUpdateCourse(id);
   const publishMut = useTogglePublish(id);
+  const submitMut = useSubmitForReview(id);
   const addModuleMut = useAddModule(id);
   const reorderModulesMut = useReorderModules(id);
 
@@ -41,7 +65,8 @@ export default function CourseBuilder() {
 
   const modules = course?.modules || [];
   const totalLessons = modules.reduce((n, m) => n + (m.lessons?.length || 0), 0);
-  const canPublish = course?.isPublished || totalLessons > 0;
+  const status = course?.status || 'draft';
+  const approved = status === 'approved';
 
   const addModule = (e) => {
     e.preventDefault();
@@ -111,16 +136,7 @@ export default function CourseBuilder() {
               <span className="font-semibold text-brand-600 dark:text-brand-300">
                 {priceLabel(course.price)}
               </span>
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold uppercase tracking-wide ${
-                  course.isPublished
-                    ? 'bg-green-500/20 text-green-700 dark:text-green-300'
-                    : 'bg-slate-500/20 text-slate-600 dark:text-slate-300'
-                }`}
-              >
-                {course.isPublished ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                {course.isPublished ? 'Published' : 'Draft'}
-              </span>
+              <StatusBadge status={status} isPublished={course.isPublished} />
             </div>
             <h1 className="truncate text-2xl font-extrabold text-slate-900 dark:text-white">
               {course.title}
@@ -142,27 +158,65 @@ export default function CourseBuilder() {
             <button onClick={() => setEditingDetails(true)} className="btn-ghost">
               <Pencil className="h-4 w-4" /> Details
             </button>
-            <button
-              onClick={() => publishMut.mutate(!course.isPublished)}
-              disabled={publishMut.isPending || !canPublish}
-              title={!canPublish ? 'Add at least one lesson before publishing' : undefined}
-              className={course.isPublished ? 'btn-ghost' : 'btn-primary'}
-            >
-              {publishMut.isPending ? (
-                <Spinner />
-              ) : course.isPublished ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Globe className="h-4 w-4" />
-              )}
-              {course.isPublished ? 'Unpublish' : 'Publish'}
-            </button>
+
+            {status === 'pending' ? (
+              <button disabled className="btn-ghost opacity-70" title="An admin is reviewing this course">
+                <Clock className="h-4 w-4" /> Awaiting review
+              </button>
+            ) : approved ? (
+              <button
+                onClick={() => publishMut.mutate(!course.isPublished)}
+                disabled={publishMut.isPending || totalLessons === 0}
+                className={course.isPublished ? 'btn-ghost' : 'btn-primary'}
+              >
+                {publishMut.isPending ? (
+                  <Spinner />
+                ) : course.isPublished ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Globe className="h-4 w-4" />
+                )}
+                {course.isPublished ? 'Unpublish' : 'Publish'}
+              </button>
+            ) : (
+              <button
+                onClick={() => submitMut.mutate()}
+                disabled={submitMut.isPending || totalLessons === 0}
+                title={totalLessons === 0 ? 'Add at least one lesson first' : 'Submit for admin review'}
+                className="btn-primary"
+              >
+                {submitMut.isPending ? <Spinner /> : <Send className="h-4 w-4" />}
+                Submit for review
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Draft hint */}
-      {!course.isPublished && totalLessons === 0 && (
+      {/* Status banners */}
+      {status === 'rejected' && (
+        <div className="glass-card flex items-start gap-3 border-l-4 border-rose-400 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-500" />
+          <div className="text-sm">
+            <p className="font-semibold text-slate-800 dark:text-slate-100">Changes requested by an admin</p>
+            <p className="text-slate-500 dark:text-slate-400">
+              {course.reviewNote || 'Please review your course and resubmit.'} Make your edits, then click <b>Submit for review</b> again.
+            </p>
+          </div>
+        </div>
+      )}
+      {status === 'pending' && (
+        <div className="glass-card flex items-start gap-3 border-l-4 border-amber-400 p-4">
+          <Clock className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+          <div className="text-sm">
+            <p className="font-semibold text-slate-800 dark:text-slate-100">Awaiting admin approval</p>
+            <p className="text-slate-500 dark:text-slate-400">
+              You'll be notified once an admin reviews it. It isn't visible to students until approved.
+            </p>
+          </div>
+        </div>
+      )}
+      {status === 'draft' && totalLessons === 0 && (
         <div className="glass-card flex items-start gap-3 border-l-4 border-amber-400 p-4">
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
           <div className="text-sm">
@@ -170,8 +224,8 @@ export default function CourseBuilder() {
               This course is a draft — students can't see it yet.
             </p>
             <p className="text-slate-500 dark:text-slate-400">
-              Add a module and at least one lesson below, then click <b>Publish</b>. Only
-              published courses appear in Browse.
+              Add a module and at least one lesson below, then <b>Submit for review</b>. An admin
+              approves it before it appears in Browse.
             </p>
           </div>
         </div>

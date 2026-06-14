@@ -74,6 +74,13 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  /** Apply a session returned by an OAuth bridge ({ accessToken, user }). */
+  const applySession = useCallback(({ accessToken, user: u }) => {
+    setAccessToken(accessToken);
+    setUser(u);
+    return u;
+  }, []);
+
   /** Merge updated fields into the cached user (after a profile edit). */
   const updateUser = useCallback((patch) => {
     setUser((prev) => (prev ? { ...prev, ...patch } : prev));
@@ -91,6 +98,7 @@ export function AuthProvider({ children }) {
     logout,
     updateUser,
     setToken,
+    applySession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

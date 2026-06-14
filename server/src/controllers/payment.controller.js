@@ -7,7 +7,11 @@ import { Enrollment } from '../models/Enrollment.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ensureEnrollment } from '../services/enrollment.service.js';
-import { splitRevenue } from '../config/revenue.js';
+import { splitRevenue, INSTRUCTOR_RATE, PLATFORM_FEE_RATE } from '../config/revenue.js';
+import { resolveCoupon } from './coupon.controller.js';
+import { Coupon } from '../models/Coupon.js';
+
+const money = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 function assertStripe() {
   if (!isStripeConfigured) {
@@ -24,7 +28,7 @@ function assertStripe() {
  */
 export const createCheckout = asyncHandler(async (req, res) => {
   assertStripe();
-  const { courseId } = req.body;
+  const { courseId, couponCode } = req.body;
   if (!mongoose.isValidObjectId(courseId)) throw new ApiError(400, 'Invalid course id.');
 
   const course = await Course.findById(courseId);
@@ -33,6 +37,21 @@ export const createCheckout = asyncHandler(async (req, res) => {
 
   const already = await Enrollment.exists({ student: req.user._id, course: course._id });
   if (already) throw new ApiError(400, 'You are already enrolled in this course.');
+
+  // Apply a coupon if provided.
+  let price = course.price;
+  let coupon = null;
+  if (couponCode && String(couponCode).trim()) {
+    coupon = await resolveCoupon(couponCode, course._id);
+    price = Math.max(0, Math.round(course.price * (1 - coupon.percentOff / 100) * 100) / 100);
+  }
+
+  // 100%-off (or below Stripe's ~$0.50 minimum) → enroll for free, count the redemption.
+  if (price < 0.5) {
+    await ensureEnrollment(req.user._id, course._id);
+    if (coupon) await Coupon.updateOne({ _id: coupon._id }, { $inc: { timesRedeemed: 1 } });
+    return res.json({ success: true, free: true, courseId: String(course._id) });
+  }
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
@@ -46,12 +65,17 @@ export const createCheckout = asyncHandler(async (req, res) => {
             name: course.title,
             description: (course.description || '').slice(0, 300) || undefined,
           },
-          unit_amount: Math.round(course.price * 100),
+          unit_amount: Math.round(price * 100),
         },
         quantity: 1,
       },
     ],
-    metadata: { courseId: String(course._id), studentId: String(req.user._id) },
+    metadata: {
+      courseId: String(course._id),
+      studentId: String(req.user._id),
+      couponId: coupon ? String(coupon._id) : '',
+      couponCode: coupon ? coupon.code : '',
+    },
     success_url: `${env.clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&course=${course._id}`,
     cancel_url: `${env.clientUrl}/courses/${course._id}`,
   });
@@ -63,7 +87,8 @@ export const createCheckout = asyncHandler(async (req, res) => {
         student: req.user._id,
         course: course._id,
         stripeSessionId: session.id,
-        amount: course.price,
+        amount: price,
+        couponCode: coupon ? coupon.code : '',
         currency: env.stripeCurrency,
         status: 'pending',
       },
@@ -82,6 +107,12 @@ async function fulfillSession(session) {
 
   const amount = (session.amount_total || 0) / 100;
   const { platformFee, instructorEarning } = splitRevenue(amount);
+  const couponCode = session.metadata?.couponCode || '';
+  const couponId = session.metadata?.couponId;
+
+  // Was this session already fulfilled? (webhook + confirm can both fire)
+  const existing = await Payment.findOne({ stripeSessionId: session.id }).select('status');
+  const alreadyPaid = existing?.status === 'paid';
 
   await Payment.findOneAndUpdate(
     { stripeSessionId: session.id },
@@ -93,6 +124,7 @@ async function fulfillSession(session) {
         currency: session.currency || env.stripeCurrency,
         platformFee,
         instructorEarning,
+        couponCode,
       },
       $setOnInsert: {
         student: studentId,
@@ -102,6 +134,11 @@ async function fulfillSession(session) {
     },
     { upsert: true, setDefaultsOnInsert: true }
   );
+
+  // Count the coupon redemption only on the first paid transition.
+  if (!alreadyPaid && couponId) {
+    await Coupon.updateOne({ _id: couponId }, { $inc: { timesRedeemed: 1 } });
+  }
 
   await ensureEnrollment(studentId, courseId);
 }
@@ -142,6 +179,69 @@ export const listPayments = asyncHandler(async (req, res) => {
     .filter((p) => p.status === 'paid')
     .reduce((s, p) => s + (p.amount || 0), 0);
   res.json({ success: true, payments, revenue: Math.round(revenue * 100) / 100 });
+});
+
+/**
+ * GET /api/payments/earnings   (instructor/admin)
+ * Net earnings (90%) across the instructor's courses: totals, this month,
+ * per-course breakdown and recent sales.
+ */
+export const getEarnings = asyncHandler(async (req, res) => {
+  const filter = req.user.role === 'admin' ? {} : { instructor: req.user._id };
+  const courses = await Course.find(filter).select('title').lean();
+  const ids = courses.map((c) => c._id);
+  const titleMap = Object.fromEntries(courses.map((c) => [String(c._id), c.title]));
+
+  const paid = await Payment.find({ course: { $in: ids }, status: 'paid' })
+    .sort({ createdAt: -1 })
+    .populate('student', 'name email')
+    .populate('course', 'title')
+    .lean();
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  let gross = 0;
+  let monthGross = 0;
+  const perCourseMap = {};
+  for (const p of paid) {
+    const amt = p.amount || 0;
+    gross += amt;
+    if (new Date(p.createdAt) >= monthStart) monthGross += amt;
+    const key = String(p.course?._id || p.course);
+    if (!perCourseMap[key]) {
+      perCourseMap[key] = { courseId: key, title: p.course?.title || titleMap[key] || 'Course', sales: 0, gross: 0 };
+    }
+    perCourseMap[key].sales += 1;
+    perCourseMap[key].gross += amt;
+  }
+
+  const perCourse = Object.values(perCourseMap)
+    .map((c) => ({ ...c, gross: money(c.gross), net: money(c.gross * INSTRUCTOR_RATE) }))
+    .sort((a, b) => b.net - a.net);
+
+  const recent = paid.slice(0, 15).map((p) => ({
+    id: p._id,
+    student: p.student?.name || 'Student',
+    course: p.course?.title || 'Course',
+    amount: money(p.amount || 0),
+    net: money((p.amount || 0) * INSTRUCTOR_RATE),
+    date: p.createdAt,
+  }));
+
+  res.json({
+    success: true,
+    share: { instructor: INSTRUCTOR_RATE, platform: PLATFORM_FEE_RATE },
+    totals: {
+      sales: paid.length,
+      gross: money(gross),
+      net: money(gross * INSTRUCTOR_RATE),
+      platformFee: money(gross * PLATFORM_FEE_RATE),
+      thisMonthNet: money(monthGross * INSTRUCTOR_RATE),
+    },
+    perCourse,
+    recent,
+  });
 });
 
 /**

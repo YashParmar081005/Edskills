@@ -4,6 +4,7 @@ import { Enrollment } from '../models/Enrollment.js';
 import { Progress } from '../models/Progress.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
+import { awardXp, XP } from '../services/gamification.service.js';
 
 /** Recompute course % and sync the enrollment's completed status. */
 async function recomputeCourse(studentId, courseId) {
@@ -41,6 +42,13 @@ export const saveProgress = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Enroll in this course to track progress.');
   }
 
+  // Capture prior state to award XP only on first-time transitions.
+  const [priorProgress, priorEnroll] = await Promise.all([
+    Progress.findOne({ student: req.user._id, lesson: lessonId }).select('completed').lean(),
+    Enrollment.findOne({ student: req.user._id, course: lesson.course }).select('status').lean(),
+  ]);
+  const wasCompleted = priorProgress?.completed === true;
+
   const set = { course: lesson.course };
   if (typeof completed === 'boolean') {
     set.completed = completed;
@@ -57,6 +65,14 @@ export const saveProgress = asyncHandler(async (req, res) => {
   );
 
   const summary = await recomputeCourse(req.user._id, lesson.course);
+
+  // Gamification (fire-and-forget) — only on first completion / course finish.
+  if (set.completed === true && !wasCompleted) {
+    awardXp(req.user._id, XP.lesson, { action: 'lesson' });
+    if (summary.percent === 100 && priorEnroll?.status !== 'completed') {
+      awardXp(req.user._id, XP.courseComplete, { action: 'courseComplete' });
+    }
+  }
 
   res.json({ success: true, progress, ...summary });
 });

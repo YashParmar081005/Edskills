@@ -1,4 +1,4 @@
-import { BookPlus, Layers, FileQuestion, ClipboardList, MessagesSquare, LineChart } from 'lucide-react';
+import { BookPlus, Layers, FileQuestion, ClipboardList, MessagesSquare, LineChart, Wallet, Ticket } from 'lucide-react';
 import DashboardScaffold from '../../features/dashboard/DashboardScaffold.jsx';
 
 const accent = {
@@ -15,6 +15,8 @@ const cards = [
   { Icon: ClipboardList, label: 'Assignments', desc: 'Create & AI-grade submissions.', to: '/instructor/assignments' },
   { Icon: MessagesSquare, label: 'Discussions', desc: 'Answer student questions.', to: '/instructor/discussions' },
   { Icon: LineChart, label: 'Analytics', desc: 'Track engagement & quiz scores.', to: '/instructor/analytics' },
+  { Icon: Wallet, label: 'Earnings', desc: 'Your sales & net revenue (90%).', to: '/instructor/earnings' },
+  { Icon: Ticket, label: 'Coupons', desc: 'Create discount codes for your courses.', to: '/instructor/coupons' },
 ];
 
 export default function InstructorDashboard() {

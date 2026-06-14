@@ -31,7 +31,7 @@ function validQuiz(obj) {
  * Generate MCQ questions from lesson content.
  * @returns {Promise<Array<{type,question,options,correctIndex,explanation,points}>>}
  */
-export async function generateQuizQuestions(content, { numQuestions = 5, title = '' } = {}) {
+export async function generateQuizQuestions(content, { numQuestions = 5, title = '', meta } = {}) {
   const n = Math.min(Math.max(numQuestions, 1), 10);
   const user = `Create ${n} multiple-choice questions that test understanding of the lesson below.
 
@@ -55,6 +55,7 @@ ${String(content).slice(0, 8000)}
     user,
     validate: validQuiz,
     temperature: 0.5,
+    meta,
   });
 
   return data.questions.map((q) => ({
@@ -79,7 +80,7 @@ const ASK_SYSTEM =
  * Answer a course question grounded in retrieved chunks.
  * @returns {Promise<{answer:string, sources:number[]}>}
  */
-export async function answerCourseQuestion({ question, chunks }) {
+export async function answerCourseQuestion({ question, chunks, meta }) {
   const context = chunks
     .map((c, i) => `[${i + 1}] (from lesson "${c.lessonTitle}")\n${c.chunkText}`)
     .join('\n\n');
@@ -91,6 +92,7 @@ export async function answerCourseQuestion({ question, chunks }) {
     user,
     validate: (o) => o && typeof o.answer === 'string',
     temperature: 0.3,
+    meta,
   });
 
   return {
@@ -114,7 +116,7 @@ const ASSISTANT_SYSTEM = (role) =>
  * the model may ground course-specific answers in it and cite excerpt numbers.
  * @returns {Promise<{reply:string, sources:number[]}>}
  */
-export async function assistantChat({ role, messages, courseContext = '', docContext = '' }) {
+export async function assistantChat({ role, messages, courseContext = '', docContext = '', meta }) {
   const history = messages
     .slice(-6)
     .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
@@ -137,6 +139,7 @@ export async function assistantChat({ role, messages, courseContext = '', docCon
     user,
     validate: (o) => o && typeof o.reply === 'string',
     temperature: 0.5,
+    meta,
   });
 
   return {
@@ -156,7 +159,7 @@ const DOC_QA_SYSTEM =
  * Answer a question grounded strictly in an uploaded document's text.
  * @returns {Promise<{answer:string, found:boolean}>}
  */
-export async function answerFromDocument({ documentText, question, history = [] }) {
+export async function answerFromDocument({ documentText, question, history = [], meta }) {
   const convo = history
     .slice(-4)
     .map((m) => `${m.role === 'user' ? 'Q' : 'A'}: ${m.content}`)
@@ -171,6 +174,7 @@ export async function answerFromDocument({ documentText, question, history = [] 
     user,
     validate: (o) => o && typeof o.answer === 'string',
     temperature: 0.2,
+    meta,
   });
 
   return { answer: data.answer.trim(), found: data.found !== false };
@@ -186,7 +190,7 @@ const FLASH_SYSTEM =
  * Generate study flashcards from a topic (or from supplied material).
  * @returns {Promise<Array<{front:string, back:string}>>}
  */
-export async function generateFlashcards({ topic = '', count = 10, context = '' } = {}) {
+export async function generateFlashcards({ topic = '', count = 10, context = '', meta } = {}) {
   const n = Math.min(Math.max(count, 3), 20);
   const user = `Create ${n} study flashcards ${
     context ? 'based on the MATERIAL below' : `about the topic: ${topic}`
@@ -203,6 +207,7 @@ Rules:
     validate: (o) =>
       o && Array.isArray(o.cards) && o.cards.length > 0 && o.cards.every((c) => c.front && c.back),
     temperature: 0.6,
+    meta,
   });
 
   return data.cards
@@ -220,7 +225,7 @@ const MOCK_SYSTEM =
  * Generate a topic-based mock test (MCQs with explanations).
  * @returns {Promise<Array<{question,options,correctIndex,explanation}>>}
  */
-export async function generateMockTest({ topic = '', numQuestions = 5, difficulty = 'medium', context = '' } = {}) {
+export async function generateMockTest({ topic = '', numQuestions = 5, difficulty = 'medium', context = '', meta } = {}) {
   const n = Math.min(Math.max(numQuestions, 1), 15);
   const user = `Create a ${difficulty}-difficulty mock test of ${n} multiple-choice questions ${
     context ? 'based on the MATERIAL below' : `about the topic: ${topic}`
@@ -238,6 +243,7 @@ Rules:
     user,
     validate: validQuiz,
     temperature: 0.5,
+    meta,
   });
 
   return data.questions.map((q) => ({
@@ -259,7 +265,7 @@ const AVATAR_SYSTEM =
  * Seeds are fed to a deterministic avatar renderer (DiceBear) on the client.
  * @returns {Promise<string[]>}
  */
-export async function generateAvatarSeeds({ name = '', prompt = '', count = 8 } = {}) {
+export async function generateAvatarSeeds({ name = '', prompt = '', count = 8, meta } = {}) {
   const n = Math.min(Math.max(count, 1), 12);
   const user = `Invent ${n} short, distinct, imaginative "persona seed" phrases for generating profile avatars.
 Requested vibe/theme: ${prompt || 'fun, friendly, professional and varied'}
@@ -276,6 +282,7 @@ Rules:
     user,
     validate: (o) => o && Array.isArray(o.seeds) && o.seeds.length > 0,
     temperature: 0.9,
+    meta,
   });
 
   return data.seeds.map((s) => String(s).trim()).filter(Boolean).slice(0, n);
@@ -291,7 +298,7 @@ const GRADE_SYSTEM =
  * Grade an open-ended answer.
  * @returns {Promise<{score:number, feedback:string}>}
  */
-export async function gradeOpenAnswer({ question, answer, maxPoints = 1, rubric = '' }) {
+export async function gradeOpenAnswer({ question, answer, maxPoints = 1, rubric = '', meta }) {
   const user = `Grade the student's answer to the question.
 
 Respond with JSON: {"score": <number between 0 and ${maxPoints}>, "feedback": "<concise constructive feedback>"}
@@ -308,6 +315,7 @@ Rules:
     user,
     validate: (o) => o && typeof o.score === 'number' && o.score >= 0,
     temperature: 0.2,
+    meta,
   });
 
   return {
@@ -320,7 +328,7 @@ Rules:
  * Grade a student's assignment submission against the instructions/rubric.
  * @returns {Promise<{score:number, feedback:string}>}
  */
-export async function gradeAssignment({ title, description, maxScore = 100, submission }) {
+export async function gradeAssignment({ title, description, maxScore = 100, submission, meta }) {
   const user = `Grade this student's assignment submission.
 
 Respond with JSON: {"score": <number between 0 and ${maxScore}>, "feedback": "<detailed, constructive feedback>"}
@@ -344,6 +352,7 @@ Rules:
     user,
     validate: (o) => o && typeof o.score === 'number' && o.score >= 0,
     temperature: 0.2,
+    meta,
   });
 
   return {

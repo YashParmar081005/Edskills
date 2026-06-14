@@ -1,4 +1,5 @@
 import { env } from '../../config/env.js';
+import { recordAiUsage } from '../aiUsage.service.js';
 
 /**
  * Single LLM provider wrapper so the model can be swapped from one place.
@@ -18,7 +19,7 @@ const provider = PROVIDERS[env.aiProvider] || PROVIDERS.groq;
 
 export const isAIConfigured = () => Boolean(provider.apiKey());
 
-/** Low-level chat call. Returns the assistant message string. */
+/** Low-level chat call. Returns { content, usage }. */
 async function chat(messages, { temperature = 0.4, jsonMode = true } = {}) {
   const res = await fetch(provider.url, {
     method: 'POST',
@@ -40,7 +41,10 @@ async function chat(messages, { temperature = 0.4, jsonMode = true } = {}) {
   }
 
   const data = await res.json();
-  return data.choices?.[0]?.message?.content || '';
+  return {
+    content: data.choices?.[0]?.message?.content || '',
+    usage: data.usage || null,
+  };
 }
 
 /** Parse JSON defensively — handles stray prose / code fences around the object. */
@@ -75,7 +79,7 @@ function safeParseJSON(str) {
  * @param {number} [o.temperature]
  * @param {number} [o.maxAttempts]
  */
-export async function chatJSON({ system, user, validate, temperature = 0.4, maxAttempts = 3 }) {
+export async function chatJSON({ system, user, validate, temperature = 0.4, maxAttempts = 3, meta }) {
   let messages = [
     { role: 'system', content: system },
     { role: 'user', content: user },
@@ -85,7 +89,12 @@ export async function chatJSON({ system, user, validate, temperature = 0.4, maxA
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     let content;
     try {
-      content = await chat(messages, { temperature, jsonMode: true });
+      const result = await chat(messages, { temperature, jsonMode: true });
+      content = result.content;
+      // Record token usage/cost for every billed call (even retries).
+      if (result.usage && meta) {
+        recordAiUsage({ user: meta.user, type: meta.type, model: provider.model(), usage: result.usage });
+      }
     } catch (err) {
       lastError = err;
       continue; // network / API error → retry

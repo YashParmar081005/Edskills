@@ -1,6 +1,8 @@
+import crypto from 'crypto';
 import { User } from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
+import { verifyInsforgeToken, ensureInsforgeProfile, isInsforgeConfigured } from '../config/insforge.js';
 import {
   signAccessToken,
   signRefreshToken,
@@ -125,6 +127,49 @@ export const logout = asyncHandler(async (req, res) => {
 
   res.clearCookie(REFRESH_COOKIE, { ...refreshCookieOptions(), maxAge: undefined });
   res.json({ success: true, message: 'Logged out.' });
+});
+
+/**
+ * POST /api/auth/oauth/insforge
+ * Body: { accessToken }  — an InsForge session token from a completed Google
+ * (or any InsForge) OAuth sign-in on the client.
+ *
+ * Verifies the token with InsForge, ensures an InsForge profile exists, then
+ * mirrors the identity into the app's user store and issues an app session so
+ * every existing feature keeps working. New users are created on first login.
+ */
+export const oauthInsforge = asyncHandler(async (req, res) => {
+  if (!isInsforgeConfigured) {
+    throw new ApiError(503, 'InsForge is not configured on the server.');
+  }
+  const { accessToken } = req.body;
+  if (!accessToken) throw new ApiError(400, 'accessToken is required.');
+
+  const insUser = await verifyInsforgeToken(accessToken);
+  if (!insUser?.email) {
+    throw new ApiError(401, 'Could not verify the Google sign-in. Please try again.');
+  }
+
+  // Role comes from InsForge (source of truth); new users default to student.
+  const role = await ensureInsforgeProfile(insUser);
+  const email = insUser.email.toLowerCase();
+  const name = insUser.profile?.name || email.split('@')[0];
+  const avatar = insUser.profile?.avatar_url || '';
+
+  let user = await User.findOne({ email });
+  if (!user) {
+    // OAuth users have no password — set a random one they never use.
+    user = new User({ name, email, role: role || 'student', avatar });
+    await user.setPassword(crypto.randomBytes(24).toString('hex'));
+    await user.save();
+  } else {
+    // Keep profile fresh; don't downgrade an existing role.
+    if (avatar && !user.avatar) user.avatar = avatar;
+    await user.save();
+  }
+
+  const appAccessToken = await issueTokens(user, res);
+  res.json({ success: true, accessToken: appAccessToken, user: user.toSafeJSON() });
 });
 
 /**

@@ -42,6 +42,18 @@ export const env = {
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
   stripeCurrency: process.env.STRIPE_CURRENCY || 'usd',
 
+  // InsForge (optional BaaS — Google OAuth / database). Leave blank to disable.
+  // baseUrl: https://api.insforge.dev (cloud) or http://localhost:7130 (self-host)
+  insforge: {
+    baseUrl: process.env.INSFORGE_BASE_URL || 'https://api.insforge.dev',
+    apiKey: process.env.INSFORGE_API_KEY || '', // server admin key (uak_…)
+    anonKey: process.env.INSFORGE_ANON_KEY || '', // public/anon key
+  },
+
+  // Which datastore the app reads/writes. 'mongo' (default, current) or
+  // 'insforge' (Postgres BaaS — enabled once the migration is complete & tested).
+  dataBackend: (process.env.DATA_BACKEND || 'mongo').toLowerCase(),
+
   // Email (Phase 9). Leave blank to use an auto Ethereal test inbox in dev.
   email: {
     host: process.env.EMAIL_HOST || '',

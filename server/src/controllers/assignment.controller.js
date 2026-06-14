@@ -308,6 +308,7 @@ export const aiSuggestGrade = asyncHandler(async (req, res) => {
       description: assignment.description,
       maxScore: assignment.maxScore,
       submission: submission.content,
+      meta: { user: req.user._id, type: 'assignment-grade' },
     });
     submission.aiScore = score;
     submission.aiFeedback = feedback;

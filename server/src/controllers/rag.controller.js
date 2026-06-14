@@ -40,7 +40,11 @@ export const askCourse = asyncHandler(async (req, res) => {
   }
 
   try {
-    const { answer, sources } = await answerCourseQuestion({ question: question.trim(), chunks });
+    const { answer, sources } = await answerCourseQuestion({
+      question: question.trim(),
+      chunks,
+      meta: { user: req.user._id, type: 'ask' },
+    });
 
     // Map cited excerpt numbers → unique lessons.
     const used = sources.length ? sources : chunks.map((_, i) => i + 1);
@@ -107,6 +111,7 @@ export const chatAssistant = asyncHandler(async (req, res) => {
       messages,
       courseContext,
       docContext,
+      meta: { user: req.user._id, type: 'chat' },
     });
 
     const seen = new Set();

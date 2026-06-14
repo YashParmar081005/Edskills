@@ -39,6 +39,20 @@ const userSchema = new mongoose.Schema(
       reminderEmails: { type: Boolean, default: true },
       productUpdates: { type: Boolean, default: true },
     },
+    // Gamification
+    xp: { type: Number, default: 0, index: true },
+    streak: {
+      current: { type: Number, default: 0 },
+      longest: { type: Number, default: 0 },
+      lastActive: { type: String, default: '' }, // YYYY-MM-DD (UTC)
+    },
+    badges: [
+      {
+        key: { type: String },
+        earnedAt: { type: Date, default: Date.now },
+        _id: false,
+      },
+    ],
     refreshToken: {
       type: String,
       select: false,
